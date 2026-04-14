@@ -30,13 +30,56 @@ export function renderMiTrabajo(mount, { activities, actor, today, formUrl }) {
   const completed = mine.filter(a => a.estado === 'Completado').length;
   const atrasadas = mine.filter(a => a.estado === 'Atrasado').length;
 
+  const isST = actor.rol === 'ST' || (actor.rol || '').startsWith('ST');
+  const verifyQueue = isST ? activities.filter(a => a.estado === 'Reportada — pendiente verificación ST') : [];
+
   mount.innerHTML = `
-    ${renderHero(state, actor, mine, racha, { rank, mySubRank, mySub })}
+    ${renderHero(state, actor, mine, racha, { rank, mySubRank, mySub, isST, verifyCount: verifyQueue.length })}
+    ${isST ? renderVerifyCenter(verifyQueue) : ''}
     ${renderMetaQ(mine, completed, atrasadas, qPct, today)}
     ${renderUrgent(urgent, today)}
     ${renderAgenda(mine, today)}
     ${renderSubmesaStanding(mySub, mySubRank, actor)}
   `;
+}
+
+function renderVerifyCenter(items) {
+  if (!items.length) {
+    return `
+      <section class="panel" style="margin-bottom:16px;border-color:var(--blue-border);background:linear-gradient(135deg,var(--blue-bg),#dbeafe)">
+        <h4 style="color:var(--blue-ink)">🛡️ Centro de verificación <span class="sub">Tu responsabilidad como ST</span></h4>
+        <div style="font-size:13px;color:var(--ink-2)">No hay actividades pendientes de verificar. ✓</div>
+      </section>
+    `;
+  }
+  const rows = items.map(a => `
+    <div class="atn-item" data-id="${a.id}" style="border-top-color:#bfdbfe">
+      <div class="pill-dot" style="background:var(--blue);margin-top:5px"></div>
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--ink)">${a.hito_operativo}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px">
+          Reportado por <b style="color:var(--ink-2)">${a.lidera_apoya.split(/[,(/]/)[0].trim()}</b> · ${a.fecha_reporte ? 'hace ' + daysSince(a.fecha_reporte) + ' días' : 'sin fecha'}
+        </div>
+        ${a.enlace_evidencia ? `<div style="font-size:11px;margin-top:6px"><a href="${a.enlace_evidencia}" target="_blank" rel="noopener" style="color:var(--blue-ink);text-decoration:none;font-weight:600">📎 Ver evidencia →</a></div>` : ''}
+      </div>
+      <div style="text-align:right">
+        <span class="badge verify">Verificar</span>
+      </div>
+    </div>
+  `).join('');
+  return `
+    <section class="panel" style="margin-bottom:16px;border:2px solid var(--blue-border);background:linear-gradient(180deg,var(--blue-bg),var(--surface))">
+      <h4 style="color:var(--blue-ink)">🛡️ Centro de verificación <span class="sub" style="color:var(--blue-ink);opacity:0.7">${items.length} actividad${items.length > 1 ? 'es' : ''} reportada${items.length > 1 ? 's' : ''} esperan tu validación</span></h4>
+      <div style="font-size:12px;color:var(--ink-2);margin-bottom:12px;line-height:1.5">Revisa la evidencia adjunta de cada reporte. Si cumple, marca como verificada en el Google Sheet (columna <i>verificado_st</i>) y se cerrará el ciclo. Tiempo promedio por ítem: 2 min.</div>
+      ${rows}
+    </section>
+  `;
+}
+
+function daysSince(dateStr) {
+  const d = new Date(dateStr);
+  const today = new Date();
+  return Math.max(0, Math.round((today - d) / 86400000));
 }
 
 function renderHero(state, actor, mine, racha, ctx) {

@@ -2,127 +2,283 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Demo — Mesa de Cooperación</title>
+  <title>Demo — Mesa de Cooperación de Orellana</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/tokens.css">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--ink); padding: 40px 24px; line-height: 1.5; }
-    .wrap { max-width: 900px; margin: 0 auto; }
-    h1 { font-size: 28px; letter-spacing: -0.02em; margin-bottom: 8px; }
-    .sub { color: var(--muted); font-size: 14px; margin-bottom: 32px; }
-    h2 { font-size: 16px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin: 32px 0 14px; font-weight: 700; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--ink); padding: 40px 24px; line-height: 1.55; }
+    .wrap { max-width: 960px; margin: 0 auto; }
+    h1 { font-size: 30px; letter-spacing: -0.02em; margin-bottom: 8px; font-weight: 800; }
+    .sub { color: var(--muted); font-size: 14px; margin-bottom: 32px; max-width: 640px; line-height: 1.6; }
+
+    .section-title { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 36px 0 14px; font-weight: 700; }
+    h2 { font-size: 20px; font-weight: 700; margin-bottom: 4px; letter-spacing: -0.01em; }
+    h3 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+
+    .role-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 24px; text-decoration: none; color: var(--ink); display: block; transition: all 0.15s; box-shadow: 0 1px 2px rgba(15,23,42,0.04); position: relative; overflow: hidden; }
+    .role-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; }
+    .role-card.exec::before { background: linear-gradient(90deg, #0d4a25, #2d8f55); }
+    .role-card.verify::before { background: linear-gradient(90deg, #1e3a8a, #2563eb); }
+    .role-card:hover { transform: translateY(-2px); box-shadow: 0 12px 26px -12px rgba(15,23,42,0.18); }
+    .role-card.exec:hover { border-color: #86d29d; }
+    .role-card.verify:hover { border-color: #93b8f2; }
+    .role-card .rol-tag { display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; padding: 4px 10px; border-radius: 4px; margin-bottom: 12px; }
+    .role-card.exec .rol-tag { background: #dcfce7; color: #14532d; }
+    .role-card.verify .rol-tag { background: #dbeafe; color: #1e40af; }
+    .role-card h3 { font-size: 18px; margin-bottom: 4px; }
+    .role-card .who { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+    .role-card p { font-size: 13px; color: var(--ink-3); line-height: 1.55; margin-bottom: 16px; }
+    .role-card ul { font-size: 12px; color: var(--ink-3); padding-left: 18px; margin-bottom: 16px; }
+    .role-card ul li { margin-bottom: 3px; }
+    .role-card .link { font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; margin-top: 8px; }
+    .role-card.exec .link { color: #1a6b3c; }
+    .role-card.verify .link { color: #1e40af; }
+    .role-card .link .arrow { transition: transform 0.15s; }
+    .role-card:hover .link .arrow { transform: translateX(3px); }
+
+    .flow-diagram { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 24px; margin-top: 16px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; font-size: 13px; }
+    .flow-step { flex: 1; min-width: 180px; }
+    .flow-step .n { display: inline-block; width: 24px; height: 24px; line-height: 24px; text-align: center; background: var(--primary); color: #fff; border-radius: 50%; font-weight: 700; font-size: 12px; margin-bottom: 8px; }
+    .flow-step .t { font-weight: 700; color: var(--ink); margin-bottom: 4px; font-size: 13px; }
+    .flow-step .d { font-size: 12px; color: var(--ink-3); line-height: 1.5; }
+    .flow-arrow { color: var(--muted); font-size: 20px; }
+
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
-    .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; text-decoration: none; color: var(--ink); display: block; transition: all 0.15s; }
-    .card:hover { border-color: var(--primary); transform: translateY(-1px); box-shadow: 0 4px 14px -8px rgba(15,23,42,0.15); }
-    .card h3 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
-    .card p { font-size: 12px; color: var(--muted); line-height: 1.5; }
-    .card .type { display: inline-block; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding: 3px 7px; border-radius: 4px; margin-bottom: 8px; }
-    .type.dash { background: #dcfce7; color: #166534; }
-    .type.email { background: #dbeafe; color: #1e40af; }
-    .type.doc { background: #fef3c7; color: #92400e; }
+    .email-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; text-decoration: none; color: var(--ink); display: block; transition: all 0.15s; }
+    .email-card:hover { border-color: var(--primary); transform: translateY(-1px); box-shadow: 0 4px 14px -8px rgba(15,23,42,0.15); }
+    .email-card .type { display: inline-block; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding: 3px 7px; border-radius: 4px; margin-bottom: 8px; background: #dbeafe; color: #1e40af; }
+    .email-card h3 { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+    .email-card p { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+    .rollout { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 24px; }
+    .rollout ol { counter-reset: step; list-style: none; padding: 0; }
+    .rollout li { padding: 14px 0; border-top: 1px solid var(--line-2); position: relative; padding-left: 52px; counter-increment: step; }
+    .rollout li:first-child { border-top: 0; padding-top: 0; }
+    .rollout li::before { content: counter(step); position: absolute; left: 0; top: 14px; width: 34px; height: 34px; background: var(--ink); color: #fff; border-radius: 50%; text-align: center; line-height: 34px; font-weight: 700; font-size: 14px; }
+    .rollout li:first-child::before { top: 0; }
+    .rollout li .title { font-weight: 700; font-size: 14px; margin-bottom: 4px; color: var(--ink); }
+    .rollout li .details { font-size: 13px; color: var(--ink-3); line-height: 1.6; }
+    .rollout li .details code { background: var(--line-2); padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+    .rollout li.done { opacity: 0.55; }
+    .rollout li.done::before { background: var(--green); }
+    .rollout li.done .title::after { content: " ✓"; color: var(--green); }
+
+    .kpi-row { display: flex; gap: 14px; margin-top: 28px; flex-wrap: wrap; }
+    .kpi { flex: 1; min-width: 180px; background: linear-gradient(135deg, #0f172a, #1e3a5f); color: #fff; border-radius: 12px; padding: 20px 24px; }
+    .kpi .l { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.7; font-weight: 600; }
+    .kpi .n { font-size: 28px; font-weight: 800; margin-top: 6px; letter-spacing: -0.02em; }
+    .kpi .sub { font-size: 11px; opacity: 0.85; margin-top: 4px; }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Demo — Mesa de Cooperación</h1>
-    <p class="sub">Panel de navegación para la demostración. Todo está en producción (github.io). Los emails son mockups estáticos para presentación.</p>
+    <h1>Demo — Mesa de Cooperación de Orellana</h1>
+    <p class="sub">Panel de navegación para la presentación. Usamos Orellana como caso de demostración. Sucumbíos funciona idéntico. Dashboard en producción · emails son mockups estáticos para que puedas verlos sin configurar Gmail.</p>
 
-    <h2>Dashboards — públicos</h2>
-    <div class="grid">
-      <a class="card" href="../index.html">
-        <div class="type dash">Landing</div>
-        <h3>Página de entrada</h3>
-        <p>Selector de provincia con estadísticas.</p>
+    <!-- BIG PICTURE NUMBERS -->
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="l">Costo total</div>
+        <div class="n">$0</div>
+        <div class="sub">GitHub + Google gratis</div>
+      </div>
+      <div class="kpi">
+        <div class="l">Tiempo de rollout</div>
+        <div class="n">~20 min</div>
+        <div class="sub">Una sola sesión de configuración</div>
+      </div>
+      <div class="kpi">
+        <div class="l">Actividades seguidas</div>
+        <div class="n">79</div>
+        <div class="sub">Por trimestre · 24 meses</div>
+      </div>
+      <div class="kpi">
+        <div class="l">Emails automáticos</div>
+        <div class="n">6 tipos</div>
+        <div class="sub">Diario, semanal, mensual</div>
+      </div>
+    </div>
+
+    <!-- FLOW DIAGRAM — EXECUTOR VS VERIFIER -->
+    <div class="section-title">El flujo de ejecución y verificación</div>
+    <h2>Dos roles claros en el sistema</h2>
+    <p style="font-size:14px;color:var(--ink-3);margin-top:4px;margin-bottom:8px">Un actor (por ejemplo, una Coordinación de Submesa) <b>ejecuta</b> la actividad y la reporta como completada. La Secretaría Técnica (ST) <b>verifica</b> la evidencia y cierra el ciclo. Dos líneas de responsabilidad separadas.</p>
+
+    <div class="flow-diagram">
+      <div class="flow-step">
+        <div class="n">1</div>
+        <div class="t">Coord. de Submesa ejecuta</div>
+        <div class="d">Realiza la actividad asignada a su submesa.</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="n">2</div>
+        <div class="t">Reporta desde su email</div>
+        <div class="d">Clic en "✅ Ya la completé" → sube evidencia.</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="n">3</div>
+        <div class="t">Entra a cola de verificación</div>
+        <div class="d">La ST ve el reporte en su panel.</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="n">4</div>
+        <div class="t">ST verifica y cierra</div>
+        <div class="d">Revisa evidencia, marca verificada → actividad completada oficialmente.</div>
+      </div>
+    </div>
+
+    <!-- TWO ROLE DEMOS -->
+    <div class="section-title">Ve la diferencia en vivo</div>
+    <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(380px, 1fr))">
+      <a class="role-card exec" href="../orellana/?actor=coordinacion-general-de-gestion-ambiental&token=DEMO2026-ORL-S1#mi-trabajo">
+        <div class="rol-tag">Rol 1 · Ejecutor</div>
+        <h3>Coordinación General de Gestión Ambiental</h3>
+        <div class="who">Líder de la Submesa S1 · Ambiente</div>
+        <p>La vista personal de quien ejecuta: su saludo, su racha, sus actividades pendientes, sus próximos hitos, y el ranking de su submesa.</p>
+        <ul>
+          <li>Saludo personalizado con estado social (podio / on-track / atrás)</li>
+          <li>Lista "Lo más urgente" con botones "✅ Completé" / "⚠ Bloqueador"</li>
+          <li>Racha personal (visible solo para ellos)</li>
+          <li>Agenda próximos 30 días</li>
+          <li>Cómo va su Submesa vs. otras</li>
+        </ul>
+        <div class="link">Ver Mi trabajo como Coord. Ambiental <span class="arrow">→</span></div>
       </a>
-      <a class="card" href="../orellana/">
-        <div class="type dash">Dashboard</div>
-        <h3>Orellana</h3>
-        <p>Panel + Actividades + Timeline. Vista pública.</p>
-      </a>
-      <a class="card" href="../sucumbios/">
-        <div class="type dash">Dashboard</div>
-        <h3>Sucumbíos</h3>
-        <p>Panel + Actividades + Timeline. Vista pública.</p>
+
+      <a class="role-card verify" href="../orellana/?actor=secretaria-tecnica-gadpo&token=DEMO2026-ST-GADPO#mi-trabajo">
+        <div class="rol-tag">Rol 2 · Verificador</div>
+        <h3>Secretaría Técnica (GADPO)</h3>
+        <div class="who">Órgano operativo · valida los reportes de la Mesa</div>
+        <p>La vista de quien verifica: una "sala de control" con todas las actividades reportadas esperando validación, más sus propias responsabilidades operativas.</p>
+        <ul>
+          <li><b>Centro de verificación prominente</b> al entrar</li>
+          <li>Cada reporte muestra quién lo mandó, cuándo, y el enlace a la evidencia</li>
+          <li>Un clic abre la evidencia en Drive</li>
+          <li>Tras validar → marca "verificado_st = Sí" en el Sheet</li>
+          <li>También ve sus propias actividades operativas</li>
+        </ul>
+        <div class="link">Ver Mi trabajo como ST <span class="arrow">→</span></div>
       </a>
     </div>
 
-    <h2>Dashboards — con enlace mágico (Mi trabajo)</h2>
+    <!-- PUBLIC VIEWS -->
+    <div class="section-title">Vistas públicas (sin enlace personal)</div>
+    <p style="font-size:14px;color:var(--ink-3);margin-top:4px;margin-bottom:12px">Cualquier persona con el link, sin identificarse, puede ver el Panel, las Actividades y la Línea de Tiempo. Solo lectura. No puede reportar nada ni suplantar a nadie.</p>
     <div class="grid">
-      <a class="card" href="../orellana/?actor=coordinacion-general-de-gestion-ambiental&token=DEMO2026-ORL-S1#mi-trabajo">
-        <div class="type dash">Con token</div>
-        <h3>Mi trabajo · Coord. Ambiental Orellana</h3>
-        <p>Vista personal. Saludo, racha, meta del trimestre.</p>
+      <a class="email-card" href="../index.html" style="border-color:#bbf7d0;background:#f0fdf4">
+        <div class="type" style="background:#dcfce7;color:#166534">Landing</div>
+        <h3>Portal público de las Mesas</h3>
+        <p>Punto de entrada: selector entre Orellana y Sucumbíos.</p>
       </a>
-      <a class="card" href="../sucumbios/?actor=direccion-gestion-ambiental-gadps&token=DEMO2026-SUC-S1#mi-trabajo">
-        <div class="type dash">Con token</div>
-        <h3>Mi trabajo · Dirección Ambiental Sucumbíos</h3>
-        <p>Vista personal en Sucumbíos.</p>
+      <a class="email-card" href="../orellana/" style="border-color:#bbf7d0;background:#f0fdf4">
+        <div class="type" style="background:#dcfce7;color:#166534">Panel</div>
+        <h3>Dashboard Orellana — vista pública</h3>
+        <p>Scorecard · Actividades · Timeline. Visible a toda la Mesa y al público.</p>
       </a>
     </div>
 
-    <h2>Emails automatizados — mockups</h2>
+    <!-- EMAIL MOCKUPS -->
+    <div class="section-title">Los 6 emails automáticos (mockups)</div>
+    <p style="font-size:14px;color:var(--ink-3);margin-top:4px;margin-bottom:12px">Estos son mockups estáticos. El sistema real los genera y envía cada día/semana/mes desde Google Apps Script.</p>
     <div class="grid">
-      <a class="card" href="emails/01-recordatorio-7dias.html">
-        <div class="type email">Diario</div>
-        <h3>Recordatorio · 7 días antes</h3>
-        <p>Recordatorio amable al responsable 7 días antes del plazo.</p>
+      <a class="email-card" href="emails/01-recordatorio-7dias.html">
+        <div class="type">Diario · 6:30 AM</div>
+        <h3>01 · Recordatorio 7 días antes</h3>
+        <p>Aviso amable al responsable cuando se acerca el plazo.</p>
       </a>
-      <a class="card" href="emails/02-vencimiento-hoy.html">
-        <div class="type email">Diario</div>
-        <h3>Vence hoy</h3>
-        <p>Aviso el día del plazo. Tono amarillo, confirma estado.</p>
+      <a class="email-card" href="emails/02-vencimiento-hoy.html">
+        <div class="type">Diario · 6:30 AM</div>
+        <h3>02 · Vence hoy</h3>
+        <p>El día del plazo. Tono amarillo, confirma estado.</p>
       </a>
-      <a class="card" href="emails/03-atraso-3dias.html">
-        <div class="type email">Diario</div>
-        <h3>Atraso + advertencia</h3>
-        <p>3 días de atraso. Advierte que la CSE será notificada en 4 días. Copia a la ST.</p>
+      <a class="email-card" href="emails/03-atraso-3dias.html">
+        <div class="type">Diario · 6:30 AM</div>
+        <h3>03 · Atraso 3 días (con advertencia)</h3>
+        <p>Advertencia de escalación. Copia a la ST.</p>
       </a>
-      <a class="card" href="emails/04-escalacion.html">
-        <div class="type email">Diario</div>
-        <h3>Escalación CSE</h3>
-        <p>7 días de atraso. Se escala a la CSE y a la Presidencia de la Mesa.</p>
+      <a class="email-card" href="emails/04-escalacion.html">
+        <div class="type">Diario · 6:30 AM</div>
+        <h3>04 · Escalación CSE + Presidencia</h3>
+        <p>7 días de atraso. Se convoca al órgano de gobernanza.</p>
       </a>
-      <a class="card" href="emails/05-resumen-semanal.html">
-        <div class="type email">Lunes 6:30am</div>
-        <h3>Resumen semanal personal</h3>
-        <p>Cada actor recibe su resumen de actividades urgentes / próximas / futuras.</p>
+      <a class="email-card" href="emails/05-resumen-semanal.html">
+        <div class="type">Lunes · 6:30 AM</div>
+        <h3>05 · Resumen semanal personal</h3>
+        <p>Cada actor ve sus actividades urgentes/próximas/futuras.</p>
       </a>
-      <a class="card" href="emails/06-informe-mensual.html">
-        <div class="type email">Día 1</div>
-        <h3>Informe mensual al Grupo Gestor</h3>
-        <p>% avance global, estadísticas, tabla comparativa de actores.</p>
+      <a class="email-card" href="emails/06-informe-mensual.html">
+        <div class="type">Día 1 del mes</div>
+        <h3>06 · Informe mensual al Grupo Gestor</h3>
+        <p>% global, estadísticas, ranking de actores.</p>
       </a>
     </div>
 
-    <h2>Documentación</h2>
+    <!-- ROLLOUT STEPS -->
+    <div class="section-title">Qué necesitamos para arrancar — pasos reales del rollout</div>
+    <h2>De "listo para probar" a "emails corriendo en producción"</h2>
+    <p style="font-size:14px;color:var(--ink-3);margin-top:4px;margin-bottom:16px">Una sola sesión de configuración, ~20 minutos. Los pasos 1 y 2 ya están hechos. Los pasos 3–7 los ejecuta un coordinador de CI o el consultor con credenciales de Google.</p>
+
+    <div class="rollout">
+      <ol>
+        <li class="done">
+          <div class="title">Dashboard construido y desplegado</div>
+          <div class="details">Los tres paneles (público, Mi trabajo ejecutor, Mi trabajo verificador) están funcionando en producción en <code>89jdvm.github.io/mesa-cooperacion-monitoreo</code>. Costo: $0 — GitHub Pages gratuito.</div>
+        </li>
+        <li class="done">
+          <div class="title">Motor de notificaciones codificado</div>
+          <div class="details">El archivo <code>apps-script/Code.gs</code> (~950 líneas) tiene todos los templates de email, la lógica de triggers, el formulario web para confirmaciones, y la verificación de identidad por token. Listo para pegar en Google Apps Script.</div>
+        </li>
+        <li>
+          <div class="title">Crear cuenta Gmail dedicada</div>
+          <div class="details">Crear <code>mesa.cooperacion.monitoreo@gmail.com</code> (u otro nombre institucional). Esta cuenta será la que envíe todos los correos y sea dueña del Google Sheet.</div>
+        </li>
+        <li>
+          <div class="title">Crear el Google Sheet operativo</div>
+          <div class="details">Desde esa cuenta, crear un Sheet con 5 pestañas: <code>Orellana</code>, <code>Sucumbíos</code>, <code>Actores</code>, <code>Log</code>, <code>Config</code>. Importar los CSVs ya preparados (actividades + plantilla de actores). La hoja Actores se llena con emails reales de cada responsable.</div>
+        </li>
+        <li>
+          <div class="title">Conectar Apps Script al Sheet</div>
+          <div class="details">En el Sheet → Extensiones → Apps Script → pegar <code>Code.gs</code> → configurar <code>SHEET_ID</code>. Desplegar como Aplicación Web (esto genera la <code>FORMULARIO_URL</code> que el dashboard usa para recibir respuestas).</div>
+        </li>
+        <li>
+          <div class="title">Generar tokens y enviar enlaces mágicos</div>
+          <div class="details">Ejecutar <code>generarTokensParaActores()</code> → cada actor recibe un UUID único. Luego <code>enviarEnlacesMagicos()</code> → cada actor recibe por email su enlace personal al dashboard. Desde ese momento, cada persona tiene acceso privado a su pestaña Mi trabajo.</div>
+        </li>
+        <li>
+          <div class="title">Activar los triggers automáticos</div>
+          <div class="details">Ejecutar <code>crearTriggers()</code> → se configuran los 3 disparadores: recordatorio diario a las 6:30 AM, resumen semanal los lunes, verificación mensual del día 1. A partir de aquí, el sistema corre solo.</div>
+        </li>
+      </ol>
+    </div>
+
+    <!-- DOCS -->
+    <div class="section-title">Documentación de referencia</div>
     <div class="grid">
-      <a class="card" href="../GLOSARIO.md">
-        <div class="type doc">Glosario</div>
+      <a class="email-card" href="https://github.com/89jdvm/mesa-cooperacion-monitoreo/blob/main/GLOSARIO.md" style="border-color:#fde68a;background:#fffbea">
+        <div class="type" style="background:#fef3c7;color:#92400e">Doc</div>
         <h3>Glosario · conceptos en lenguaje claro</h3>
-        <p>Qué es el formulario, el enlace mágico, etc.</p>
+        <p>Token, enlace mágico, espejo social, racha, etc.</p>
       </a>
-      <a class="card" href="../DEMO.md">
-        <div class="type doc">Demo</div>
-        <h3>Guía de demostración</h3>
-        <p>URLs y pasos para la presentación.</p>
+      <a class="email-card" href="https://github.com/89jdvm/mesa-cooperacion-monitoreo/blob/main/TEST_ROLLOUT.md" style="border-color:#fde68a;background:#fffbea">
+        <div class="type" style="background:#fef3c7;color:#92400e">Doc</div>
+        <h3>Guía de rollout (20 min)</h3>
+        <p>Paso a paso detallado con screenshots-ready.</p>
       </a>
-      <a class="card" href="../TEST_ROLLOUT.md">
-        <div class="type doc">Rollout</div>
-        <h3>Guía de configuración (20 min)</h3>
-        <p>Pasos para activar emails reales.</p>
+      <a class="email-card" href="https://github.com/89jdvm/mesa-cooperacion-monitoreo" style="border-color:#fde68a;background:#fffbea">
+        <div class="type" style="background:#fef3c7;color:#92400e">Repo</div>
+        <h3>Código fuente · GitHub</h3>
+        <p>Público, auditable, sin caja negra.</p>
       </a>
     </div>
 
-    <h2 style="margin-top:48px">Arquitectura en 1 minuto</h2>
-    <div style="background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:24px;font-size:13px;line-height:1.7;color:var(--ink-2)">
-      <p><b>Dashboard:</b> HTML estático en GitHub Pages. Sin servidor, sin costo, sin mantenimiento. Cualquiera con la URL lo ve.</p>
-      <p style="margin-top:10px"><b>Datos:</b> los archivos <code>actividades.json</code> de cada provincia contienen todas las actividades, estados, responsables. Se actualizan manualmente (o desde el Google Sheet) y se publican con un <code>git push</code>.</p>
-      <p style="margin-top:10px"><b>Emails:</b> Google Apps Script corriendo sobre un Google Sheet. El Sheet es la fuente de verdad operativa (la ST edita ahí). El script envía emails diarios a las 6:30am, el resumen semanal los lunes, el informe mensual el día 1.</p>
-      <p style="margin-top:10px"><b>Identidad:</b> cada actor recibe por email su <i>enlace mágico</i> personal — una URL con su nombre y un secreto único. Sin el enlace, nadie puede suplantar a otro actor. Con el enlace, accede a su panel "Mi trabajo" y puede reportar actividades completadas.</p>
-      <p style="margin-top:10px"><b>Costo total:</b> <b>$0</b>. Se mantiene con cuentas gratuitas de Google + GitHub.</p>
-    </div>
+    <p style="text-align:center;color:var(--muted);font-size:11px;margin-top:48px;padding-top:24px;border-top:1px solid var(--line)">
+      Contrato N.° 6011904 · Fundación Conservación Internacional Ecuador · Consultoría Juan Diego Villacís Morales · 2026
+    </p>
   </div>
 </body>
 </html>
