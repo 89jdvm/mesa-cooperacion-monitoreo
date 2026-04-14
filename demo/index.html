@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Demo — Mesa de Cooperación</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/css/tokens.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--ink); padding: 40px 24px; line-height: 1.5; }
+    .wrap { max-width: 900px; margin: 0 auto; }
+    h1 { font-size: 28px; letter-spacing: -0.02em; margin-bottom: 8px; }
+    .sub { color: var(--muted); font-size: 14px; margin-bottom: 32px; }
+    h2 { font-size: 16px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin: 32px 0 14px; font-weight: 700; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; text-decoration: none; color: var(--ink); display: block; transition: all 0.15s; }
+    .card:hover { border-color: var(--primary); transform: translateY(-1px); box-shadow: 0 4px 14px -8px rgba(15,23,42,0.15); }
+    .card h3 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .card p { font-size: 12px; color: var(--muted); line-height: 1.5; }
+    .card .type { display: inline-block; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding: 3px 7px; border-radius: 4px; margin-bottom: 8px; }
+    .type.dash { background: #dcfce7; color: #166534; }
+    .type.email { background: #dbeafe; color: #1e40af; }
+    .type.doc { background: #fef3c7; color: #92400e; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Demo — Mesa de Cooperación</h1>
+    <p class="sub">Panel de navegación para la demostración. Todo está en producción (github.io). Los emails son mockups estáticos para presentación.</p>
+
+    <h2>Dashboards — públicos</h2>
+    <div class="grid">
+      <a class="card" href="../index.html">
+        <div class="type dash">Landing</div>
+        <h3>Página de entrada</h3>
+        <p>Selector de provincia con estadísticas.</p>
+      </a>
+      <a class="card" href="../orellana/">
+        <div class="type dash">Dashboard</div>
+        <h3>Orellana</h3>
+        <p>Panel + Actividades + Timeline. Vista pública.</p>
+      </a>
+      <a class="card" href="../sucumbios/">
+        <div class="type dash">Dashboard</div>
+        <h3>Sucumbíos</h3>
+        <p>Panel + Actividades + Timeline. Vista pública.</p>
+      </a>
+    </div>
+
+    <h2>Dashboards — con enlace mágico (Mi trabajo)</h2>
+    <div class="grid">
+      <a class="card" href="../orellana/?actor=coordinacion-general-de-gestion-ambiental&token=DEMO2026-ORL-S1#mi-trabajo">
+        <div class="type dash">Con token</div>
+        <h3>Mi trabajo · Coord. Ambiental Orellana</h3>
+        <p>Vista personal. Saludo, racha, meta del trimestre.</p>
+      </a>
+      <a class="card" href="../sucumbios/?actor=direccion-gestion-ambiental-gadps&token=DEMO2026-SUC-S1#mi-trabajo">
+        <div class="type dash">Con token</div>
+        <h3>Mi trabajo · Dirección Ambiental Sucumbíos</h3>
+        <p>Vista personal en Sucumbíos.</p>
+      </a>
+    </div>
+
+    <h2>Emails automatizados — mockups</h2>
+    <div class="grid">
+      <a class="card" href="emails/01-recordatorio-7dias.html">
+        <div class="type email">Diario</div>
+        <h3>Recordatorio · 7 días antes</h3>
+        <p>Recordatorio amable al responsable 7 días antes del plazo.</p>
+      </a>
+      <a class="card" href="emails/02-vencimiento-hoy.html">
+        <div class="type email">Diario</div>
+        <h3>Vence hoy</h3>
+        <p>Aviso el día del plazo. Tono amarillo, confirma estado.</p>
+      </a>
+      <a class="card" href="emails/03-atraso-3dias.html">
+        <div class="type email">Diario</div>
+        <h3>Atraso + advertencia</h3>
+        <p>3 días de atraso. Advierte que la CSE será notificada en 4 días. Copia a la ST.</p>
+      </a>
+      <a class="card" href="emails/04-escalacion.html">
+        <div class="type email">Diario</div>
+        <h3>Escalación CSE</h3>
+        <p>7 días de atraso. Se escala a la CSE y a la Presidencia de la Mesa.</p>
+      </a>
+      <a class="card" href="emails/05-resumen-semanal.html">
+        <div class="type email">Lunes 6:30am</div>
+        <h3>Resumen semanal personal</h3>
+        <p>Cada actor recibe su resumen de actividades urgentes / próximas / futuras.</p>
+      </a>
+      <a class="card" href="emails/06-informe-mensual.html">
+        <div class="type email">Día 1</div>
+        <h3>Informe mensual al Grupo Gestor</h3>
+        <p>% avance global, estadísticas, tabla comparativa de actores.</p>
+      </a>
+    </div>
+
+    <h2>Documentación</h2>
+    <div class="grid">
+      <a class="card" href="../GLOSARIO.md">
+        <div class="type doc">Glosario</div>
+        <h3>Glosario · conceptos en lenguaje claro</h3>
+        <p>Qué es el formulario, el enlace mágico, etc.</p>
+      </a>
+      <a class="card" href="../DEMO.md">
+        <div class="type doc">Demo</div>
+        <h3>Guía de demostración</h3>
+        <p>URLs y pasos para la presentación.</p>
+      </a>
+      <a class="card" href="../TEST_ROLLOUT.md">
+        <div class="type doc">Rollout</div>
+        <h3>Guía de configuración (20 min)</h3>
+        <p>Pasos para activar emails reales.</p>
+      </a>
+    </div>
+
+    <h2 style="margin-top:48px">Arquitectura en 1 minuto</h2>
+    <div style="background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:24px;font-size:13px;line-height:1.7;color:var(--ink-2)">
+      <p><b>Dashboard:</b> HTML estático en GitHub Pages. Sin servidor, sin costo, sin mantenimiento. Cualquiera con la URL lo ve.</p>
+      <p style="margin-top:10px"><b>Datos:</b> los archivos <code>actividades.json</code> de cada provincia contienen todas las actividades, estados, responsables. Se actualizan manualmente (o desde el Google Sheet) y se publican con un <code>git push</code>.</p>
+      <p style="margin-top:10px"><b>Emails:</b> Google Apps Script corriendo sobre un Google Sheet. El Sheet es la fuente de verdad operativa (la ST edita ahí). El script envía emails diarios a las 6:30am, el resumen semanal los lunes, el informe mensual el día 1.</p>
+      <p style="margin-top:10px"><b>Identidad:</b> cada actor recibe por email su <i>enlace mágico</i> personal — una URL con su nombre y un secreto único. Sin el enlace, nadie puede suplantar a otro actor. Con el enlace, accede a su panel "Mi trabajo" y puede reportar actividades completadas.</p>
+      <p style="margin-top:10px"><b>Costo total:</b> <b>$0</b>. Se mantiene con cuentas gratuitas de Google + GitHub.</p>
+    </div>
+  </div>
+</body>
+</html>
