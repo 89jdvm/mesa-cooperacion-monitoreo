@@ -5,147 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mesa de Cooperación — Orellana</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/dashboard.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/css/dashboard.css">
+  <link rel="stylesheet" href="../shared/css/mobile.css">
   <style>
-    :root {
-      --primary: #1a6b3c;
-      --primary-light: #e8f5ec;
-      --primary-dark: #0d4a25;
-    }
+    :root { --primary: #1a6b3c; --primary-dark: #0d4a25; --primary-accent: #2d8f55; }
+    #app { padding: 0; }
+    main.main { padding: 22px 24px 30px; max-width: 1240px; margin: 0 auto; }
   </style>
 </head>
 <body>
-
-<button class="sidebar-toggle" id="sidebar-toggle">☰</button>
-
-<div class="app">
-  <!-- Sidebar -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-logo">
-      <div class="logo-icon">🌿</div>
-      <div>
-        <h1>Mesa de Cooperación</h1>
-        <div class="province-tag">Provincia de Orellana</div>
-      </div>
-    </div>
-
-    <nav class="sidebar-nav">
-      <a href="#" data-view="resumen" class="active" onclick="navigateTo('resumen'); return false;">
-        <span class="nav-icon">📊</span> Resumen General
-      </a>
-      <a href="#" data-view="actividades" onclick="navigateTo('actividades'); return false;">
-        <span class="nav-icon">📋</span> Actividades
-      </a>
-      <a href="#" data-view="timeline" onclick="navigateTo('timeline'); return false;">
-        <span class="nav-icon">📅</span> Línea de Tiempo
-      </a>
-      <a href="#" data-view="mi-vista" onclick="navigateTo('mi-vista'); return false;">
-        <span class="nav-icon">👤</span> Mi Vista
-      </a>
-    </nav>
-
-    <div style="padding:0.75rem 0.5rem; margin-top:auto;">
-      <div style="font-size:0.72rem; opacity:0.6; margin-bottom:0.5rem;">Submesas:</div>
-      <div style="font-size:0.75rem; line-height:1.8;">
-        <span style="color:#60a5fa">S1</span> Ambiente<br>
-        <span style="color:#60a5fa">S2</span> Social e Infraestructura<br>
-        <span style="color:#60a5fa">S3</span> Desarrollo Económico
-      </div>
-    </div>
-
-    <div class="sidebar-footer">
-      Hoja de Ruta 2026–2028<br>
-      Actualizado automáticamente
-    </div>
-  </aside>
-
-  <!-- Main -->
-  <main class="main">
-    <!-- Header -->
-    <div class="main-header">
-      <h2 id="view-title">Resumen General</h2>
-      <p class="subtitle" id="view-subtitle">Vista por trimestre con estado de cada actividad</p>
-    </div>
-
-    <!-- Stats -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-label">Total Actividades</div>
-        <div class="stat-value" id="stat-total">—</div>
-        <div class="stat-detail">8 trimestres · 24 meses</div>
-      </div>
-      <div class="stat-card green">
-        <div class="stat-label">Completadas</div>
-        <div class="stat-value" id="stat-completed">—</div>
-        <div class="stat-detail">Verificadas por la ST</div>
-      </div>
-      <div class="stat-card red">
-        <div class="stat-label">Atrasadas</div>
-        <div class="stat-value" id="stat-delayed">—</div>
-        <div class="stat-detail">Requieren atención</div>
-      </div>
-      <div class="stat-card blue">
-        <div class="stat-label">Pendientes</div>
-        <div class="stat-value" id="stat-pending">—</div>
-        <div class="stat-detail">Por iniciar o en progreso</div>
-      </div>
-      <div class="stat-card" style="background:var(--primary);color:#fff">
-        <div class="stat-label" style="color:rgba(255,255,255,0.7)">Avance General</div>
-        <div class="stat-value" id="stat-progress-pct" style="color:#fff">—</div>
-        <div class="stat-detail" style="color:rgba(255,255,255,0.6)">de la hoja de ruta</div>
-      </div>
-    </div>
-
-    <!-- Progress bar -->
-    <div class="progress-bar-container">
-      <h3>Progreso Global</h3>
-      <div class="progress-bar" id="progress-bar"></div>
-      <div class="progress-legend">
-        <span><span class="legend-dot" style="background:var(--green)"></span> Completadas</span>
-        <span><span class="legend-dot" style="background:var(--blue)"></span> En progreso</span>
-        <span><span class="legend-dot" style="background:var(--red)"></span> Atrasadas</span>
-        <span><span class="legend-dot" style="background:#cbd5e1"></span> Pendientes</span>
-      </div>
-    </div>
-
-    <!-- Filters -->
-    <div class="filters-bar">
-      <label>Filtros:</label>
-      <select class="filter-select" id="filter-quarter"></select>
-      <select class="filter-select" id="filter-tipo"></select>
-      <select class="filter-select" id="filter-actor"></select>
-      <select class="filter-select" id="filter-status"></select>
-      <select class="filter-select" id="filter-ambito"></select>
-      <input type="text" class="filter-search" id="filter-search" placeholder="Buscar actividad...">
-      <button class="filter-clear" onclick="clearFilters()">Limpiar</button>
-    </div>
-
-    <!-- Loading -->
-    <div class="loading" id="loading">
-      <div class="loading-spinner"></div>
-      Cargando datos...
-    </div>
-
-    <!-- Content -->
-    <div id="main-content"></div>
-  </main>
-</div>
-
-<!-- Modal -->
-<div class="modal-overlay" id="modal-overlay">
-  <div class="modal">
-    <div class="modal-header">
-      <h3 id="modal-title"></h3>
-      <button class="modal-close" onclick="closeModal()">&times;</button>
-    </div>
-    <div class="modal-body" id="modal-body-content"></div>
-  </div>
-</div>
-
-<script src="js/dashboard.js"></script>
-<script>
-  initDashboard('data/actividades.json');
-</script>
+  <div id="app"></div>
+  <script type="module">
+    import { initDashboard } from '../shared/js/dashboard.js';
+    initDashboard({
+      dataUrl: 'data/actividades.json',
+      actorsUrl: '../apps-script/actores_plantilla.csv',
+      logUrl: '',
+      province: 'Orellana',
+      provinceLabel: 'Orellana'
+    });
+  </script>
 </body>
 </html>
