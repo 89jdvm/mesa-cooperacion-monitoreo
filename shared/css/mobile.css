@@ -1,0 +1,19 @@
+/* shared/css/mobile.css */
+@media (max-width: 768px) {
+  .tabs { overflow-x: auto; padding: 0 12px; }
+  .tab { padding: 12px; font-size: 13px; white-space: nowrap; }
+  .frame-top { padding: 10px 14px; }
+  .hero { grid-template-columns: 1fr !important; padding: 20px; }
+  .hero .big { font-size: 44px !important; }
+  .cards-4 { grid-template-columns: 1fr 1fr !important; }
+  .grid-2 { grid-template-columns: 1fr !important; }
+  main.main { padding: 14px !important; }
+  .tbl .thead, .tbl .row {
+    grid-template-columns: 1fr !important;
+    gap: 6px !important;
+  }
+  .tbl .thead { display: none; }
+  .tbl .row > div::before { content: attr(data-label); display: block; font-size: 10px; color: var(--muted); text-transform: uppercase; font-weight: 600; margin-bottom: 2px; }
+  .atn-item { grid-template-columns: 18px 1fr !important; }
+  .atn-item > div:last-child { grid-column: 2; }
+}
