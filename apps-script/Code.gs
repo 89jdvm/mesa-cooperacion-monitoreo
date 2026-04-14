@@ -707,15 +707,26 @@ function obtenerEmailsActor(ss, actorTexto, provincia) {
   const hoja = ss.getSheetByName('Actores');
   if (!hoja) return [];
 
+  // Tokenize the "Lidera / Apoya" text on common separators, trim, drop empties.
+  const tokens = String(actorTexto || '')
+    .split(/[,;·]| y | and /i)
+    .map(t => t.trim())
+    .filter(Boolean);
+
   const datos = hoja.getDataRange().getValues();
   const emails = [];
 
   for (let i = 1; i < datos.length; i++) {
-    const nombre = datos[i][0];
+    const nombre = String(datos[i][0] || '').trim();
     const email = datos[i][1];
     const prov = datos[i][3];
 
-    if (email && prov === provincia && actorTexto.includes(nombre)) {
+    if (!email || prov !== provincia || !nombre) continue;
+    // Strip the " - Apoyo" / " - 2" suffixes used in actores_plantilla.csv to
+    // distinguish lead vs apoyo contacts for the same actor label.
+    const base = nombre.replace(/\s*-\s*(Apoyo|\d+)$/i, '').trim();
+
+    if (tokens.some(t => t === base || t === nombre)) {
       emails.push(email);
     }
   }
@@ -828,4 +839,50 @@ function getMesAnio() {
                  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
   const hoy = new Date();
   return `${meses[hoy.getMonth()]} ${hoy.getFullYear()}`;
+}
+
+/**
+ * TEST helper — envía un email de cada tipo al usuario que ejecuta,
+ * usando la primera actividad de cada provincia. Útil para validar
+ * maquetación de emails sin depender de fechas reales.
+ */
+function testEnviarTodosLosTipos() {
+  const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+  const myEmail = Session.getActiveUser().getEmail();
+  if (!myEmail) throw new Error('No se pudo detectar tu email. Ejecuta autenticado.');
+
+  ['Orellana', 'Sucumbíos'].forEach(provincia => {
+    const hoja = ss.getSheetByName(provincia);
+    if (!hoja) return;
+    const datos = hoja.getDataRange().getValues();
+    if (datos.length < 2) return;
+    const headers = datos[0];
+    const cols = getColumnIndices(headers);
+    const fila = datos[1];
+
+    const base = {
+      provincia,
+      actividad: fila[cols.hito_operativo],
+      que: fila[cols.que_se_hace],
+      producto: fila[cols.producto_verificable],
+      evidencia: fila[cols.evidencia_minima],
+      actorTexto: fila[cols.lidera_apoya],
+      fechaLimite: new Date(),
+      dashUrl: provincia === 'Orellana' ? CONFIG.DASHBOARD_URL_ORELLANA : CONFIG.DASHBOARD_URL_SUCUMBIOS,
+      formUrl: getFormUrl(fila[cols.id])
+    };
+
+    ['recordatorio', 'vencimiento', 'atraso_warning', 'escalacion'].forEach(tipo => {
+      const diasRestantes = tipo === 'recordatorio' ? 7
+        : tipo === 'vencimiento' ? 0
+        : tipo === 'atraso_warning' ? -3
+        : -7;
+      enviarEmail([myEmail], {
+        asunto: `[TEST · ${tipo.toUpperCase()}] ${provincia} — ${base.actividad}`,
+        cuerpo: generarEmailRecordatorio({ ...base, diasRestantes, tipo })
+      });
+    });
+  });
+
+  Logger.log('testEnviarTodosLosTipos: 8 emails enviados a ' + myEmail);
 }
