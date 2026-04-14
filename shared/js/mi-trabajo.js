@@ -4,8 +4,17 @@ import { topNeedsAttention } from './priority.js';
 import { computePodio, computeRacha, computeSubmesaRace } from './gamification.js';
 import { determineState } from './mi-trabajo-state.js';
 
-export function renderMiTrabajo(mount, { activities, actor, today }) {
+export function renderMiTrabajo(mount, { activities, actor, today, formUrl }) {
   const mine = activities.filter(a => (a.lidera_apoya || '').includes(actor.name));
+  const actionLink = (id, blocker) => {
+    if (!formUrl) return '#';
+    const u = new URL(formUrl);
+    u.searchParams.set('id', id);
+    u.searchParams.set('actor', actor.slug);
+    u.searchParams.set('token', actor.token || '');
+    if (blocker) u.searchParams.set('bloqueador', 'true');
+    return u.toString();
+  };
   const podio = computePodio(activities, today);
   const rank = (() => {
     const i = podio.findIndex(p => p.actor.includes(actor.name));
@@ -119,8 +128,8 @@ function renderUrgent(items, today) {
             <div style="text-align:right">
               <div style="font-size:11px;color:var(--muted)"><b style="color:${d<0?'var(--red)':d<=3?'var(--orange)':'var(--amber)'};font-size:12px">${d<0?`−${-d} días`:`En ${d} días`}</b></div>
               <div style="display:flex;gap:6px;margin-top:6px">
-                <button class="btn btn-done" data-id="${a.id}" style="background:var(--green);color:#fff;padding:5px 11px;border-radius:6px;font-size:11px;font-weight:600;border:0">✅ Completé</button>
-                <button class="btn btn-block" data-id="${a.id}" style="background:var(--orange);color:#fff;padding:5px 11px;border-radius:6px;font-size:11px;font-weight:600;border:0">⚠ Bloqueador</button>
+                <a class="btn btn-done" href="${actionLink(a.id, false)}" target="_blank" rel="noopener" style="background:var(--green);color:#fff;padding:5px 11px;border-radius:6px;font-size:11px;font-weight:600;text-decoration:none">✅ Completé</a>
+                <a class="btn btn-block" href="${actionLink(a.id, true)}" target="_blank" rel="noopener" style="background:var(--orange);color:#fff;padding:5px 11px;border-radius:6px;font-size:11px;font-weight:600;text-decoration:none">⚠ Bloqueador</a>
               </div>
             </div>
           </div>

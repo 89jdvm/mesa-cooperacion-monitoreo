@@ -172,6 +172,7 @@ function enviarResumenSemanal() {
     const nombre = actoresData[i][0];
     const email = actoresData[i][1];
     const provincia = actoresData[i][3];
+    const token = actoresData[i][4];
 
     if (!email) continue;
 
@@ -206,7 +207,7 @@ function enviarResumenSemanal() {
     // Ordenar por fecha límite
     misActividades.sort((a, b) => a.fechaLimite - b.fechaLimite);
 
-    const dashUrl = provincia === 'Orellana' ? CONFIG.DASHBOARD_URL_ORELLANA : CONFIG.DASHBOARD_URL_SUCUMBIOS;
+    const dashUrl = getDashUrlForActor(provincia, slugify(nombre), token);
 
     const cuerpo = generarEmailSemanal(nombre, provincia, misActividades, dashUrl);
 
@@ -539,6 +540,8 @@ function generarEmailMensual(provincia, stats) {
 function doGet(e) {
   const id = e.parameter.id || '';
   const bloqueador = e.parameter.bloqueador === 'true';
+  const actorSlug = e.parameter.actor || '';
+  const token = e.parameter.token || '';
 
   const html = HtmlService.createHtmlOutput(`
     <!DOCTYPE html>
@@ -570,6 +573,8 @@ function doGet(e) {
         <form onsubmit="submitForm(event)">
           <input type="hidden" id="actId" value="${id}">
           <input type="hidden" id="isBloqueador" value="${bloqueador}">
+          <input type="hidden" id="actorSlug" value="${actorSlug}">
+          <input type="hidden" id="actorToken" value="${token}">
 
           ${bloqueador ? `
             <label>Describe el bloqueador:</label>
@@ -593,7 +598,9 @@ function doGet(e) {
             id: document.getElementById('actId').value,
             bloqueador: document.getElementById('isBloqueador').value === 'true',
             notas: document.getElementById('notas')?.value || '',
-            evidencia: document.getElementById('evidencia')?.value || ''
+            evidencia: document.getElementById('evidencia')?.value || '',
+            actor: document.getElementById('actorSlug').value,
+            token: document.getElementById('actorToken').value
           };
 
           google.script.run
@@ -618,6 +625,13 @@ function doGet(e) {
  */
 function procesarRespuesta(data) {
   const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+
+  // Verify the requester's identity via (actor slug, token) pair against
+  // the Actores sheet. Rejects any submission from an untrusted source.
+  if (!verificarToken(ss, data.actor, data.token)) {
+    registrarLog(ss, data.id || '—', '—', 'RECHAZADO: token inválido', 'actor=' + (data.actor || '') + ' · token=' + (data.token ? '***' : 'ausente'));
+    throw new Error('Identidad no verificada. Abre el formulario desde tu enlace personal en tu email o desde Mi trabajo en el dashboard.');
+  }
 
   // Determinar provincia por prefijo del ID
   const provincia = data.id.startsWith('ORL') ? 'Orellana' : 'Sucumbíos';
@@ -816,9 +830,57 @@ function registrarLog(ss, id, provincia, accion, detalle) {
   hoja.appendRow([new Date(), id, provincia, accion, detalle]);
 }
 
-function getFormUrl(id) {
+function getFormUrl(id, actorSlug, token) {
   const scriptUrl = ScriptApp.getService().getUrl();
-  return scriptUrl + '?id=' + encodeURIComponent(id);
+  let url = scriptUrl + '?id=' + encodeURIComponent(id);
+  if (actorSlug) url += '&actor=' + encodeURIComponent(actorSlug);
+  if (token) url += '&token=' + encodeURIComponent(token);
+  return url;
+}
+
+// Build a personalized dashboard URL for a specific actor slug + token.
+function getDashUrlForActor(provincia, actorSlug, token) {
+  const base = provincia === 'Orellana' ? CONFIG.DASHBOARD_URL_ORELLANA : CONFIG.DASHBOARD_URL_SUCUMBIOS;
+  if (!actorSlug || !token) return base;
+  const sep = base.includes('?') ? '&' : '?';
+  return base + sep + 'actor=' + encodeURIComponent(actorSlug) + '&token=' + encodeURIComponent(token) + '#mi-trabajo';
+}
+
+// Slugify identical to dashboard's shared/js/utils.js:slugify.
+// Lowercase, strip accents, kebab non-alphanumerics, trim leading/trailing dashes.
+function slugify(s) {
+  return String(s).toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+// Look up an actor row by slug (matches dashboard's CSV parsing).
+// Returns { name, email, rol, provincia, token } or null.
+function obtenerActorPorSlug(ss, slug) {
+  const hoja = ss.getSheetByName('Actores');
+  if (!hoja) return null;
+  const datos = hoja.getDataRange().getValues();
+  for (let i = 1; i < datos.length; i++) {
+    const nombre = String(datos[i][0] || '').trim();
+    if (!nombre) continue;
+    if (slugify(nombre) === slug) {
+      return {
+        name: nombre,
+        email: datos[i][1],
+        rol: datos[i][2],
+        provincia: datos[i][3],
+        token: datos[i][4] || ''
+      };
+    }
+  }
+  return null;
+}
+
+// Verify that a (slug, token) pair matches a registered actor.
+function verificarToken(ss, slug, token) {
+  if (!slug || !token) return false;
+  const a = obtenerActorPorSlug(ss, slug);
+  return !!(a && a.token && a.token === token);
 }
 
 function formatDate(date) {
@@ -885,4 +947,118 @@ function testEnviarTodosLosTipos() {
   });
 
   Logger.log('testEnviarTodosLosTipos: 8 emails enviados a ' + myEmail);
+}
+
+// ---- GESTIÓN DE TOKENS DE ACCESO POR ACTOR ----
+
+/**
+ * Genera un token aleatorio para cada actor que no tenga uno asignado.
+ * Ejecuta una sola vez al configurar (o cuando agregues nuevos actores).
+ * No sobrescribe tokens existentes — solo rellena los vacíos.
+ */
+function generarTokensParaActores() {
+  const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+  const hoja = ss.getSheetByName('Actores');
+  if (!hoja) throw new Error('Hoja "Actores" no encontrada');
+
+  // Asegurar encabezado de columna token (E)
+  const headerCell = hoja.getRange(1, 5);
+  if (!headerCell.getValue()) headerCell.setValue('token');
+
+  const datos = hoja.getDataRange().getValues();
+  let creados = 0;
+  for (let i = 1; i < datos.length; i++) {
+    if (datos[i][4]) continue; // ya tiene token
+    const token = Utilities.getUuid().replace(/-/g, '');
+    hoja.getRange(i + 1, 5).setValue(token);
+    creados++;
+  }
+  Logger.log('generarTokensParaActores: ' + creados + ' tokens creados.');
+  return creados;
+}
+
+/**
+ * Regenera el token de un actor específico (por nombre exacto).
+ * Invalida el token anterior — cualquier enlace viejo deja de funcionar.
+ * Úsalo si sospechas que el enlace personal de alguien se filtró.
+ */
+function rotarTokenActor(nombreActor) {
+  const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+  const hoja = ss.getSheetByName('Actores');
+  if (!hoja) throw new Error('Hoja "Actores" no encontrada');
+  const datos = hoja.getDataRange().getValues();
+  for (let i = 1; i < datos.length; i++) {
+    if (String(datos[i][0]).trim() === nombreActor.trim()) {
+      const nuevo = Utilities.getUuid().replace(/-/g, '');
+      hoja.getRange(i + 1, 5).setValue(nuevo);
+      Logger.log('rotarTokenActor: ' + nombreActor + ' → nuevo token generado');
+      return nuevo;
+    }
+  }
+  throw new Error('Actor no encontrado: ' + nombreActor);
+}
+
+/**
+ * Imprime el enlace mágico personal para cada actor.
+ * Útil para compartir el enlace manualmente (por WhatsApp, email personal, etc.)
+ * cuando el flujo automático de correo no funciona.
+ */
+function exportarEnlacesMagicos() {
+  const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+  const hoja = ss.getSheetByName('Actores');
+  if (!hoja) throw new Error('Hoja "Actores" no encontrada');
+  const datos = hoja.getDataRange().getValues();
+  const lineas = ['ACTOR | PROVINCIA | ENLACE MÁGICO'];
+  for (let i = 1; i < datos.length; i++) {
+    const nombre = String(datos[i][0] || '').trim();
+    const provincia = datos[i][3];
+    const token = datos[i][4];
+    if (!nombre || !token) continue;
+    const slug = slugify(nombre);
+    const url = getDashUrlForActor(provincia, slug, token);
+    lineas.push(nombre + ' | ' + provincia + ' | ' + url);
+  }
+  const out = lineas.join('\n');
+  Logger.log(out);
+  return out;
+}
+
+/**
+ * Envía por email a cada actor su enlace mágico personal.
+ * Ejecutar UNA VEZ tras llenar los emails en la hoja Actores y generar tokens.
+ * El actor podrá guardar el link en favoritos o en el email.
+ */
+function enviarEnlacesMagicos() {
+  const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+  const hoja = ss.getSheetByName('Actores');
+  if (!hoja) throw new Error('Hoja "Actores" no encontrada');
+  const datos = hoja.getDataRange().getValues();
+  let enviados = 0;
+  for (let i = 1; i < datos.length; i++) {
+    const nombre = String(datos[i][0] || '').trim();
+    const email = datos[i][1];
+    const provincia = datos[i][3];
+    const token = datos[i][4];
+    if (!nombre || !email || !token) continue;
+    const slug = slugify(nombre);
+    const url = getDashUrlForActor(provincia, slug, token);
+    enviarEmail([email], {
+      asunto: `Tu acceso personal — Mesa de Cooperación de ${provincia}`,
+      cuerpo: `
+        <div style="font-family:Inter,sans-serif;max-width:520px;margin:auto;padding:24px;border:1px solid #e2e8f0;border-radius:12px">
+          <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;font-weight:700">Mesa de Cooperación de ${provincia}</div>
+          <h2 style="font-size:20px;margin-top:8px;color:#0f172a">Hola, ${nombre}</h2>
+          <p style="font-size:14px;color:#334155;line-height:1.55;margin-top:12px">Este es tu enlace personal al dashboard de seguimiento. Úsalo para ver tu panel <strong>Mi trabajo</strong>, reportar actividades completadas y gestionar bloqueadores.</p>
+          <p style="font-size:12px;color:#64748b;margin-top:8px;line-height:1.55"><strong>Guárdalo:</strong> cualquiera con este enlace puede reportar en tu nombre. No lo compartas.</p>
+          <div style="text-align:center;margin:24px 0">
+            <a href="${url}" style="display:inline-block;background:#1a6b3c;color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">Abrir mi dashboard</a>
+          </div>
+          <p style="font-size:11px;color:#94a3b8;word-break:break-all;margin-top:12px">Enlace: ${url}</p>
+        </div>
+      `
+    });
+    enviados++;
+  }
+  Logger.log('enviarEnlacesMagicos: ' + enviados + ' emails enviados.');
+  return enviados;
 }

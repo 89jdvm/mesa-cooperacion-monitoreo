@@ -4,9 +4,10 @@ import { formatDate } from './utils.js';
 let activities = [];
 let actor = null;
 let logUrl = null;
+let formUrl = null;
 
-export function initActivityModal({ activities: acts, actor: a, logUrl: l }) {
-  activities = acts; actor = a; logUrl = l;
+export function initActivityModal({ activities: acts, actor: a, logUrl: l, formUrl: f }) {
+  activities = acts; actor = a; logUrl = l; formUrl = f;
   window.addEventListener('open-activity', e => open(e.detail.id));
   document.addEventListener('click', e => {
     if (e.target.classList?.contains('modal-overlay')) close();
@@ -64,13 +65,20 @@ function close() {
 
 function renderActions(a) {
   const isActorResponsible = actor && a.lidera_apoya.includes(actor.name);
-  if (isActorResponsible && a.estado !== 'Completado') {
-    return `<div style="margin-top:18px;display:flex;gap:8px">
-      <button style="background:var(--green);color:#fff;border:0;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">✅ Reportar completada</button>
-      <button style="background:var(--orange);color:#fff;border:0;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">⚠ Reportar bloqueador</button>
-    </div>`;
-  }
-  return '';
+  if (!isActorResponsible || a.estado === 'Completado') return '';
+  if (!formUrl) return '';
+  const buildUrl = (blocker) => {
+    const u = new URL(formUrl);
+    u.searchParams.set('id', a.id);
+    u.searchParams.set('actor', actor.slug);
+    u.searchParams.set('token', actor.token || '');
+    if (blocker) u.searchParams.set('bloqueador', 'true');
+    return u.toString();
+  };
+  return `<div style="margin-top:18px;display:flex;gap:8px">
+    <a href="${buildUrl(false)}" target="_blank" rel="noopener" style="background:var(--green);color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">✅ Reportar completada</a>
+    <a href="${buildUrl(true)}" target="_blank" rel="noopener" style="background:var(--orange);color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">⚠ Reportar bloqueador</a>
+  </div>`;
 }
 
 async function loadLog(id) {

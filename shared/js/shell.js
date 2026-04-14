@@ -1,12 +1,15 @@
 // shared/js/shell.js
 // Renders the top bar + tabs + identity widget. Doesn't resolve identity —
 // the entry point (dashboard.js) does that and passes `actor` in.
+//
+// Tabs visible to anonymous visitors: Panel, Actividades, Línea de Tiempo.
+// Mi trabajo tab only appears once an actor is identified (via ?actor=X&token=Y).
 
 export function renderShell({ province, provinceLabel, actor, activeTab }) {
   const root = document.getElementById('app');
   root.innerHTML = '';
   root.appendChild(renderTop(provinceLabel, actor));
-  root.appendChild(renderTabs(activeTab, province));
+  root.appendChild(renderTabs(activeTab, actor));
   const main = document.createElement('main');
   main.className = 'main';
   main.id = 'main-content';
@@ -32,22 +35,27 @@ function renderTop(provinceLabel, actor) {
           <div class="nm" style="font-weight:600">${actor.name}</div>
           <div class="rl" style="font-size:11px;color:var(--muted)">${actor.submesa || 'Mesa'}</div>
         </div>
-        <a href="#" class="change" data-action="change-actor" style="font-size:11px;color:var(--primary);margin-left:8px;text-decoration:none">Cambiar ▾</a>
+        <a href="#" class="change" data-action="logout" style="font-size:11px;color:var(--muted);margin-left:8px;text-decoration:none">Cerrar sesión</a>
       ` : `
-        <a href="#" class="change" data-action="pick-actor" style="font-size:12px;color:var(--primary);text-decoration:none">Identificarme</a>
+        <div style="font-size:11px;color:var(--muted)">Vista pública</div>
       `}
     </div>
   `;
   return el;
 }
 
-function renderTabs(activeTab, province) {
+function renderTabs(activeTab, actor) {
   const el = document.createElement('nav');
   el.className = 'tabs';
-  const tabs = ['panel','actividades','mi-trabajo','timeline'];
-  const labels = { panel: 'Panel', actividades: 'Actividades', 'mi-trabajo': 'Mi trabajo', timeline: 'Línea de Tiempo' };
-  el.innerHTML = tabs.map(t =>
-    `<a href="#${t}" class="tab ${t === activeTab ? 'active' : ''}" data-tab="${t}">${labels[t]}</a>`
+  const allTabs = [
+    { key: 'panel', label: 'Panel', requires: null },
+    { key: 'actividades', label: 'Actividades', requires: null },
+    { key: 'mi-trabajo', label: 'Mi trabajo', requires: 'actor' },
+    { key: 'timeline', label: 'Línea de Tiempo', requires: null }
+  ];
+  const visible = allTabs.filter(t => !t.requires || (t.requires === 'actor' && actor));
+  el.innerHTML = visible.map(t =>
+    `<a href="#${t.key}" class="tab ${t.key === activeTab ? 'active' : ''}" data-tab="${t.key}">${t.label}</a>`
   ).join('');
   return el;
 }
