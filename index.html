@@ -3,170 +3,270 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mesas de Cooperación — Dashboard de Seguimiento</title>
+  <title>Mesas de Cooperación — Sucumbíos y Orellana</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="shared/css/tokens.css">
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+      background: var(--bg);
+      color: var(--ink);
       min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      padding: 14px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .topbar .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--ink);
+    }
+    .topbar .brand .dots { display: flex; gap: 4px; }
+    .topbar .brand .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .topbar .brand .dot.orl { background: #1a6b3c; }
+    .topbar .brand .dot.suc { background: #1e40af; }
+    .topbar .meta { font-size: 11px; color: var(--muted); }
+
+    main {
+      flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      color: #fff;
-      padding: 2rem;
+      padding: 48px 24px;
     }
 
     .hero {
       text-align: center;
-      margin-bottom: 3rem;
+      margin-bottom: 40px;
+      max-width: 640px;
     }
-
-    .hero-icon {
-      font-size: 3.5rem;
-      margin-bottom: 1rem;
+    .hero .eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 14px;
     }
-
     .hero h1 {
-      font-size: 2rem;
+      font-size: 34px;
       font-weight: 800;
-      margin-bottom: 0.5rem;
       letter-spacing: -0.02em;
+      line-height: 1.15;
+      margin-bottom: 14px;
     }
-
     .hero p {
-      font-size: 1rem;
-      opacity: 0.7;
-      max-width: 480px;
-      margin: 0 auto;
+      font-size: 15px;
       line-height: 1.6;
+      color: var(--ink-3);
+      max-width: 540px;
+      margin: 0 auto;
     }
 
     .cards {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 1.5rem;
-      max-width: 720px;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+      max-width: 780px;
       width: 100%;
     }
 
     .card {
-      background: rgba(255,255,255,0.08);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255,255,255,0.15);
-      border-radius: 16px;
-      padding: 2rem;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 28px;
       text-decoration: none;
-      color: #fff;
-      transition: all 0.3s ease;
-      cursor: pointer;
+      color: var(--ink);
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+      box-shadow: 0 1px 2px rgba(15,23,42,0.04);
+      position: relative;
+      overflow: hidden;
+      display: block;
     }
+    .card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      border-radius: 14px 14px 0 0;
+    }
+    .card.orellana::before { background: linear-gradient(90deg, #0d4a25, #1a6b3c, #2d8f55); }
+    .card.sucumbios::before { background: linear-gradient(90deg, #1e3a8a, #1e40af, #3b82f6); }
 
     .card:hover {
-      transform: translateY(-4px);
-      background: rgba(255,255,255,0.14);
-      border-color: rgba(255,255,255,0.3);
-      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      transform: translateY(-3px);
+      box-shadow: 0 14px 34px -14px rgba(15,23,42,0.22);
     }
+    .card.orellana:hover { border-color: #86d29d; }
+    .card.sucumbios:hover { border-color: #93b8f2; }
 
-    .card-icon {
-      font-size: 2.5rem;
-      margin-bottom: 1rem;
-    }
-
-    .card h2 {
-      font-size: 1.35rem;
+    .card .eyebrow {
+      font-size: 10px;
       font-weight: 700;
-      margin-bottom: 0.35rem;
-    }
-
-    .card .province {
-      font-size: 0.85rem;
-      opacity: 0.6;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 1rem;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .card h2 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin-bottom: 6px;
+    }
+    .card .subtitle {
+      font-size: 13px;
+      color: var(--ink-3);
+      margin-bottom: 20px;
+      line-height: 1.5;
     }
 
-    .card .card-stats {
+    .card .stats {
       display: flex;
-      gap: 1rem;
-      font-size: 0.8rem;
-      opacity: 0.7;
+      gap: 28px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line-2);
+      margin-bottom: 14px;
     }
-
-    .card .card-stats span {
-      display: flex;
-      align-items: center;
-      gap: 0.3rem;
+    .card .stat .n {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+    .card .orellana-n { color: #1a6b3c; }
+    .card .sucumbios-n { color: #1e40af; }
+    .card .stat .l {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 600;
+      margin-top: 4px;
     }
 
     .card .submesas {
-      margin-top: 1rem;
-      padding-top: 1rem;
-      border-top: 1px solid rgba(255,255,255,0.1);
-      font-size: 0.78rem;
-      line-height: 1.8;
-      opacity: 0.6;
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.7;
+      padding-top: 14px;
+      border-top: 1px solid var(--line-2);
     }
+    .card .submesas b { color: var(--ink-3); font-weight: 600; }
 
-    .card.orellana:hover { border-color: #4ade80; }
-    .card.sucumbios:hover { border-color: #60a5fa; }
+    .card .cta {
+      margin-top: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .card.orellana .cta { color: #1a6b3c; }
+    .card.sucumbios .cta { color: #1e40af; }
+    .card .cta .arrow { transition: transform 0.18s ease; }
+    .card:hover .cta .arrow { transform: translateX(3px); }
 
     .footer {
-      margin-top: 3rem;
+      padding: 28px 24px 36px;
       text-align: center;
-      font-size: 0.75rem;
-      opacity: 0.4;
+      font-size: 11px;
+      color: var(--muted);
+      border-top: 1px solid var(--line);
+      background: var(--surface);
     }
+    .footer .line { max-width: 640px; margin: 0 auto; line-height: 1.6; }
 
-    @media (max-width: 640px) {
-      .hero h1 { font-size: 1.5rem; }
-      .cards { grid-template-columns: 1fr; }
+    @media (max-width: 680px) {
+      .hero h1 { font-size: 26px; }
+      .hero p { font-size: 14px; }
+      .cards { grid-template-columns: 1fr; max-width: 440px; }
+      .card { padding: 22px; }
+      main { padding: 24px 16px; }
     }
   </style>
 </head>
 <body>
 
-  <div class="hero">
-    <div class="hero-icon">🤝</div>
-    <h1>Mesas de Cooperación</h1>
-    <p>Dashboard de seguimiento y monitoreo de las Hojas de Ruta 2026–2028 para la conservación y el desarrollo sostenible.</p>
+  <div class="topbar">
+    <div class="brand">
+      <div class="dots"><div class="dot orl"></div><div class="dot suc"></div></div>
+      Mesas de Cooperación · Amazonía Norte
+    </div>
+    <div class="meta">Hoja de Ruta 2026–2028 · Seguimiento y Monitoreo</div>
   </div>
 
-  <div class="cards">
-    <a href="orellana/" class="card orellana">
-      <div class="card-icon">🌿</div>
-      <h2>Mesa de Orellana</h2>
-      <div class="province">Provincia de Orellana</div>
-      <div class="card-stats">
-        <span>📋 79 actividades</span>
-        <span>📅 8 trimestres</span>
-      </div>
-      <div class="submesas">
-        S1 Ambiente · S2 Social e Infraestructura · S3 Desarrollo Económico
-      </div>
-    </a>
+  <main>
+    <div class="hero">
+      <div class="eyebrow">Panel Público</div>
+      <h1>Seguimiento de las Mesas de Cooperación</h1>
+      <p>Dos plataformas multiactor para la conservación y el desarrollo sostenible en las provincias de Orellana y Sucumbíos. Consulta el avance, el detalle de las actividades y los principales hitos.</p>
+    </div>
 
-    <a href="sucumbios/" class="card sucumbios">
-      <div class="card-icon">🌎</div>
-      <h2>Mesa de Sucumbíos</h2>
-      <div class="province">Provincia de Sucumbíos</div>
-      <div class="card-stats">
-        <span>📋 93 actividades</span>
-        <span>📅 8 trimestres</span>
-      </div>
-      <div class="submesas">
-        S1 Ambiental · S2 Agroproductivo · S3 Patrimonio · S4 Social · S5 Gobernanza
-      </div>
-    </a>
-  </div>
+    <div class="cards">
+      <a href="orellana/" class="card orellana">
+        <div class="eyebrow">Provincia</div>
+        <h2>Orellana</h2>
+        <div class="subtitle">Mesa coordinada por la Secretaría Técnica (GADPO) con 3 submesas temáticas.</div>
+
+        <div class="stats">
+          <div class="stat"><div class="n orellana-n">79</div><div class="l">Actividades</div></div>
+          <div class="stat"><div class="n orellana-n">3</div><div class="l">Submesas</div></div>
+          <div class="stat"><div class="n orellana-n">8</div><div class="l">Trimestres</div></div>
+        </div>
+
+        <div class="submesas">
+          <b>S1</b> · Ambiente &nbsp;·&nbsp; <b>S2</b> · Social e Infraestructura &nbsp;·&nbsp; <b>S3</b> · Desarrollo Económico
+        </div>
+
+        <div class="cta">
+          <span>Abrir panel de Orellana</span>
+          <span class="arrow">→</span>
+        </div>
+      </a>
+
+      <a href="sucumbios/" class="card sucumbios">
+        <div class="eyebrow">Provincia</div>
+        <h2>Sucumbíos</h2>
+        <div class="subtitle">Mesa coordinada por la Secretaría Técnica (GADPS) con 5 submesas temáticas.</div>
+
+        <div class="stats">
+          <div class="stat"><div class="n sucumbios-n">93</div><div class="l">Actividades</div></div>
+          <div class="stat"><div class="n sucumbios-n">5</div><div class="l">Submesas</div></div>
+          <div class="stat"><div class="n sucumbios-n">8</div><div class="l">Trimestres</div></div>
+        </div>
+
+        <div class="submesas">
+          <b>S1</b> · Ambiental &nbsp;·&nbsp; <b>S2</b> · Agroproductivo &nbsp;·&nbsp; <b>S3</b> · Patrimonio &nbsp;·&nbsp; <b>S4</b> · Social &nbsp;·&nbsp; <b>S5</b> · Gobernanza
+        </div>
+
+        <div class="cta">
+          <span>Abrir panel de Sucumbíos</span>
+          <span class="arrow">→</span>
+        </div>
+      </a>
+    </div>
+  </main>
 
   <div class="footer">
-    Hoja de Ruta 2026–2028 · Sistema de Seguimiento y Monitoreo
+    <div class="line">
+      Contrato N.° 6011904 · Fundación Conservación Internacional Ecuador · Consultoría de acompañamiento técnico para la conformación de las Mesas de Cooperación
+    </div>
   </div>
 
 </body>

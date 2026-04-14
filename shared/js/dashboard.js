@@ -4,6 +4,7 @@ import { renderShell } from './shell.js';
 import { renderPanel } from './panel.js';
 import { renderActividades } from './actividades.js';
 import { renderMiTrabajo } from './mi-trabajo.js';
+import { renderTimeline } from './timeline.js';
 import { initActivityModal } from './activity-modal.js';
 import { fetchJSON, slugify } from './utils.js';
 
@@ -36,7 +37,7 @@ export async function initDashboard({ dataUrl, actorsUrl, logUrl, formUrl, provi
     if (state.tab === 'panel') renderPanel(main, { activities, today, provinceLabel });
     else if (state.tab === 'actividades') renderActividades(main, { activities, today });
     else if (state.tab === 'mi-trabajo') renderMiTrabajo(main, { activities, actor, today, formUrl });
-    else main.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted)">Línea de Tiempo — próximamente.</div>';
+    else if (state.tab === 'timeline') renderTimeline(main, { activities, today });
   };
 
   app.addEventListener('click', e => {
@@ -89,6 +90,27 @@ async function loadActors(url, province) {
 }
 
 function inferSubmesa(a) {
-  const m = /S(\d+)/.exec(a.lidera_apoya || '');
-  return m ? `S${m[1]}` : 'Mesa';
+  const text = (a.lidera_apoya || '').toLowerCase();
+
+  // Orellana submesas
+  if (a.provincia === 'Orellana') {
+    if (text.includes('gestión ambiental')) return 'S1';
+    if (text.includes('nacionalidades')) return 'S2';
+    if (text.includes('fomento productivo')) return 'S3';
+  }
+
+  // Sucumbíos submesas
+  if (a.provincia === 'Sucumbíos') {
+    if (text.includes('gestión ambiental')) return 'S1';
+    if (text.includes('planificación')) return 'S2';
+    if (text.includes('nacionalidades y turismo')) return 'S3';
+    if (text.includes('corposucumbíos') || text.includes('corposucumbios')) return 'S4';
+    if (text.includes('sucumbíos solidario') || text.includes('sucumbios solidario')) return 'S5';
+  }
+
+  // Explicit Sn in text
+  const m = /\bS(\d+)\b/.exec(a.lidera_apoya || '');
+  if (m) return `S${m[1]}`;
+
+  return 'Mesa';
 }
