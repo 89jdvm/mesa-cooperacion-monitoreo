@@ -12,8 +12,8 @@
 const CONFIG = {
   SHEET_ID: '', // <-- Pegar ID del Google Sheet aquí
   EMAIL_REMITENTE_NOMBRE: 'Mesa de Cooperación — Monitoreo',
-  DASHBOARD_URL_ORELLANA: 'https://89jdvm.github.io/mesa-cooperacion/orellana/',
-  DASHBOARD_URL_SUCUMBIOS: 'https://89jdvm.github.io/mesa-cooperacion/sucumbios/',
+  DASHBOARD_URL_ORELLANA: 'https://89jdvm.github.io/mesa-cooperacion-monitoreo/orellana/',
+  DASHBOARD_URL_SUCUMBIOS: 'https://89jdvm.github.io/mesa-cooperacion-monitoreo/sucumbios/',
   DIAS_ANTES_RECORDATORIO: 7,
   DIAS_ANTES_ESCALACION_WARNING: 3,
   DIAS_ANTES_ESCALACION: 7,
@@ -77,8 +77,9 @@ function enviarRecordatoriosDiarios() {
       const fila = datos[i];
       const estado = fila[colIndices.estado];
 
-      // Saltar completadas y reportadas
+      // Saltar completadas y reportadas (pendientes de verificación ST)
       if (estado === 'Completado') continue;
+      if (estado === 'Reportada — pendiente verificación ST') continue;
 
       const fechaLimite = new Date(fila[colIndices.fecha_limite]);
       fechaLimite.setHours(0, 0, 0, 0);
@@ -90,68 +91,94 @@ function enviarRecordatoriosDiarios() {
       const producto = fila[colIndices.producto_verificable];
       const evidencia = fila[colIndices.evidencia_minima];
 
-      const emails = obtenerEmailsActor(ss, actorTexto, provincia);
-      if (emails.length === 0) continue;
+      // Each actor gets a personalised formUrl with their (slug, token)
+      // so the submit form passes verificarToken on the server side.
+      const actores = obtenerActoresParaActividad(ss, actorTexto, provincia);
+      if (actores.length === 0) continue;
 
       const dashUrl = provincia === 'Orellana' ? CONFIG.DASHBOARD_URL_ORELLANA : CONFIG.DASHBOARD_URL_SUCUMBIOS;
-      const formUrl = getFormUrl(id);
 
       // 7 días antes
       if (diasRestantes === CONFIG.DIAS_ANTES_RECORDATORIO) {
-        enviarEmail(emails, {
-          asunto: `📋 Recordatorio: "${actividad}" vence el ${formatDate(fechaLimite)}`,
-          cuerpo: generarEmailRecordatorio({
-            provincia, actividad, que, producto, evidencia, actorTexto,
-            fechaLimite, diasRestantes, dashUrl, formUrl, tipo: 'recordatorio'
-          })
+        actores.forEach(a => {
+          enviarEmail([a.email], {
+            asunto: `📋 Recordatorio: "${actividad}" vence el ${formatDate(fechaLimite)}`,
+            cuerpo: generarEmailRecordatorio({
+              provincia, actividad, que, producto, evidencia, actorTexto,
+              fechaLimite, diasRestantes, dashUrl,
+              formUrl: getFormUrl(id, a.slug, a.token),
+              tipo: 'recordatorio'
+            })
+          });
         });
-        registrarLog(ss, id, provincia, 'Recordatorio 7 días', emails.join(', '));
+        registrarLog(ss, id, provincia, 'Recordatorio 7 días', actores.map(a => a.email).join(', '));
       }
 
       // Día del plazo
       if (diasRestantes === 0) {
-        enviarEmail(emails, {
-          asunto: `⏰ Hoy vence: "${actividad}" — confirma su estado`,
-          cuerpo: generarEmailRecordatorio({
-            provincia, actividad, que, producto, evidencia, actorTexto,
-            fechaLimite, diasRestantes, dashUrl, formUrl, tipo: 'vencimiento'
-          })
+        actores.forEach(a => {
+          enviarEmail([a.email], {
+            asunto: `⏰ Hoy vence: "${actividad}" — confirma su estado`,
+            cuerpo: generarEmailRecordatorio({
+              provincia, actividad, que, producto, evidencia, actorTexto,
+              fechaLimite, diasRestantes, dashUrl,
+              formUrl: getFormUrl(id, a.slug, a.token),
+              tipo: 'vencimiento'
+            })
+          });
         });
-        registrarLog(ss, id, provincia, 'Aviso día de vencimiento', emails.join(', '));
+        registrarLog(ss, id, provincia, 'Aviso día de vencimiento', actores.map(a => a.email).join(', '));
       }
 
       // 3 días de atraso — advertencia de escalación
       if (diasRestantes === -CONFIG.DIAS_ANTES_ESCALACION_WARNING) {
-        // Marcar como atrasado en el Sheet
         hoja.getRange(i + 1, colIndices.estado + 1).setValue('Atrasado');
 
-        const emailsST = obtenerEmailsST(ss, provincia);
-        const todosEmails = [...new Set([...emails, ...emailsST])];
-
-        enviarEmail(todosEmails, {
-          asunto: `📌 Actividad pendiente: "${actividad}" — ${Math.abs(diasRestantes)} días de atraso`,
-          cuerpo: generarEmailRecordatorio({
-            provincia, actividad, que, producto, evidencia, actorTexto,
-            fechaLimite, diasRestantes, dashUrl, formUrl, tipo: 'atraso_warning'
-          })
+        actores.forEach(a => {
+          enviarEmail([a.email], {
+            asunto: `📌 Actividad pendiente: "${actividad}" — ${Math.abs(diasRestantes)} días de atraso`,
+            cuerpo: generarEmailRecordatorio({
+              provincia, actividad, que, producto, evidencia, actorTexto,
+              fechaLimite, diasRestantes, dashUrl,
+              formUrl: getFormUrl(id, a.slug, a.token),
+              tipo: 'atraso_warning'
+            })
+          });
         });
-        registrarLog(ss, id, provincia, 'Advertencia atraso (3 días)', todosEmails.join(', '));
+        // Notify ST in copy (no actionable buttons — informational)
+        const emailsST = obtenerEmailsST(ss, provincia);
+        if (emailsST.length) {
+          enviarEmail(emailsST, {
+            asunto: `[ST] Atraso 3 días: "${actividad}" en ${provincia}`,
+            cuerpo: `<p>La actividad <strong>${actividad}</strong> (${id}) está atrasada 3 días. Asignada a: ${actorTexto}.</p>`
+          });
+        }
+        registrarLog(ss, id, provincia, 'Advertencia atraso (3 días)', actores.map(a => a.email).join(', '));
       }
 
       // 7+ días de atraso — escalación
       if (diasRestantes === -CONFIG.DIAS_ANTES_ESCALACION) {
+        actores.forEach(a => {
+          enviarEmail([a.email], {
+            asunto: `🔴 Escalación: "${actividad}" — ${Math.abs(diasRestantes)} días de atraso`,
+            cuerpo: generarEmailRecordatorio({
+              provincia, actividad, que, producto, evidencia, actorTexto,
+              fechaLimite, diasRestantes, dashUrl,
+              formUrl: getFormUrl(id, a.slug, a.token),
+              tipo: 'escalacion'
+            })
+          });
+        });
         const emailsST = obtenerEmailsST(ss, provincia);
         const emailsCSE = obtenerEmailsCSE(ss, provincia);
-        const todosEmails = [...new Set([...emails, ...emailsST, ...emailsCSE])];
-
-        enviarEmail(todosEmails, {
-          asunto: `🔴 Escalación: "${actividad}" — ${Math.abs(diasRestantes)} días de atraso`,
-          cuerpo: generarEmailRecordatorio({
-            provincia, actividad, que, producto, evidencia, actorTexto,
-            fechaLimite, diasRestantes, dashUrl, formUrl, tipo: 'escalacion'
-          })
-        });
-        registrarLog(ss, id, provincia, 'ESCALACIÓN a CSE/Presidencia', todosEmails.join(', '));
+        const escalados = [...new Set([...emailsST, ...emailsCSE])];
+        if (escalados.length) {
+          enviarEmail(escalados, {
+            asunto: `[ESCALACIÓN] "${actividad}" en ${provincia} — 7 días de atraso`,
+            cuerpo: `<p>La actividad <strong>${actividad}</strong> (${id}) está atrasada 7 días. Asignada a: ${actorTexto}. Requiere intervención de la CSE / Presidencia.</p>`
+          });
+        }
+        registrarLog(ss, id, provincia, 'ESCALACIÓN a CSE/Presidencia', actores.map(a => a.email).join(', '));
       }
     }
   });
@@ -718,34 +745,42 @@ function getColumnIndices(headers) {
 }
 
 function obtenerEmailsActor(ss, actorTexto, provincia) {
+  // Backwards-compatible wrapper that returns just the email strings.
+  // Prefer obtenerActoresParaActividad below for new code that needs token+slug.
+  return obtenerActoresParaActividad(ss, actorTexto, provincia).map(a => a.email);
+}
+
+// Returns [{email, slug, token, name}] for each actor whose name appears in
+// `actorTexto` (the "Lidera / Apoya" cell of an activity row), filtered to
+// the given provincia. Used to build per-actor personalised formUrl that
+// includes their (slug, token) for verificarToken on submit.
+function obtenerActoresParaActividad(ss, actorTexto, provincia) {
   const hoja = ss.getSheetByName('Actores');
   if (!hoja) return [];
 
-  // Tokenize the "Lidera / Apoya" text on common separators, trim, drop empties.
   const tokens = String(actorTexto || '')
     .split(/[,;·]| y | and /i)
     .map(t => t.trim())
     .filter(Boolean);
 
   const datos = hoja.getDataRange().getValues();
-  const emails = [];
+  const out = [];
 
   for (let i = 1; i < datos.length; i++) {
     const nombre = String(datos[i][0] || '').trim();
     const email = datos[i][1];
     const prov = datos[i][3];
+    const token = datos[i][4] || '';
 
     if (!email || prov !== provincia || !nombre) continue;
-    // Strip the " - Apoyo" / " - 2" suffixes used in actores_plantilla.csv to
-    // distinguish lead vs apoyo contacts for the same actor label.
     const base = nombre.replace(/\s*-\s*(Apoyo|\d+)$/i, '').trim();
 
     if (tokens.some(t => t === base || t === nombre)) {
-      emails.push(email);
+      out.push({ email, slug: slugify(nombre), token, name: nombre });
     }
   }
 
-  return emails;
+  return out;
 }
 
 function obtenerEmailsST(ss, provincia) {
@@ -922,6 +957,11 @@ function testEnviarTodosLosTipos() {
     const cols = getColumnIndices(headers);
     const fila = datos[1];
 
+    // Use the first matching actor for this activity to inject a real token
+    // into the test formUrl so the "Ya la completé" button validates end-to-end.
+    const actores = obtenerActoresParaActividad(ss, fila[cols.lidera_apoya], provincia);
+    const a = actores[0] || { slug: '', token: '' };
+
     const base = {
       provincia,
       actividad: fila[cols.hito_operativo],
@@ -931,7 +971,7 @@ function testEnviarTodosLosTipos() {
       actorTexto: fila[cols.lidera_apoya],
       fechaLimite: new Date(),
       dashUrl: provincia === 'Orellana' ? CONFIG.DASHBOARD_URL_ORELLANA : CONFIG.DASHBOARD_URL_SUCUMBIOS,
-      formUrl: getFormUrl(fila[cols.id])
+      formUrl: getFormUrl(fila[cols.id], a.slug, a.token)
     };
 
     ['recordatorio', 'vencimiento', 'atraso_warning', 'escalacion'].forEach(tipo => {
@@ -1061,4 +1101,52 @@ function enviarEnlacesMagicos() {
   }
   Logger.log('enviarEnlacesMagicos: ' + enviados + ' emails enviados.');
   return enviados;
+}
+
+// ---- HELPERS PARA SETUP / OPERACIÓN ----
+
+/**
+ * Vacía la columna token (E) de TODAS las filas de Actores. Útil antes de
+ * generarTokensParaActores para asegurar que tokens DEMO o residuales
+ * sean reemplazados por nuevos UUID. NO sobrescribe headers.
+ */
+function vaciarTokensExistentes() {
+  const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+  const hoja = ss.getSheetByName('Actores');
+  if (!hoja) throw new Error('Hoja "Actores" no encontrada');
+  const lastRow = hoja.getLastRow();
+  if (lastRow < 2) return;
+  hoja.getRange(2, 5, lastRow - 1, 1).clearContent();
+  Logger.log('vaciarTokensExistentes: tokens vaciados en filas 2..' + lastRow);
+}
+
+// ---- WRAPPERS PARA ROTACIÓN EN VIVO DURANTE EL TALLER ----
+// Pre-creados para que JD pueda ejecutar 1 click sin editar código.
+// Si un actor pierde su enlace o reporta token corrupto, seleccionar el
+// wrapper correspondiente en el dropdown y ejecutar — luego correr
+// exportarEnlacesMagicos para ver el nuevo enlace.
+
+function _rotarSucumbiosST() {
+  const t = rotarTokenActor("Secretaría Técnica (GADPS)");
+  Logger.log("Nuevo token ST GADPS: " + t);
+}
+function _rotarSucumbiosS1() {
+  const t = rotarTokenActor("Dirección Gestión Ambiental GADPS");
+  Logger.log("Nuevo token S1 Ambiental: " + t);
+}
+function _rotarSucumbiosS2() {
+  const t = rotarTokenActor("Dirección de Planificación GADPS");
+  Logger.log("Nuevo token S2 Planificación: " + t);
+}
+function _rotarSucumbiosS3() {
+  const t = rotarTokenActor("Dirección Nacionalidades y Turismo GADPS");
+  Logger.log("Nuevo token S3 Patrimonio: " + t);
+}
+function _rotarSucumbiosS4() {
+  const t = rotarTokenActor("CorpoSucumbíos");
+  Logger.log("Nuevo token S4 Social: " + t);
+}
+function _rotarSucumbiosS5() {
+  const t = rotarTokenActor("Sucumbíos Solidario");
+  Logger.log("Nuevo token S5 Gobernanza: " + t);
 }
