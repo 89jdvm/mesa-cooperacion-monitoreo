@@ -773,7 +773,12 @@ function obtenerActoresParaActividad(ss, actorTexto, provincia) {
     const token = datos[i][4] || '';
 
     if (!email || prov !== provincia || !nombre) continue;
-    const base = nombre.replace(/\s*-\s*(Apoyo|\d+)$/i, '').trim();
+    // Strip either legacy " - Apoyo"/" - N" OR the new " — <Person>" suffix
+    // used for multiple people sharing an institution.
+    const base = nombre
+      .replace(/\s*—\s*.+$/, '')
+      .replace(/\s*-\s*(Apoyo|\d+)$/i, '')
+      .trim();
 
     if (tokens.some(t => t === base || t === nombre)) {
       out.push({ email, slug: slugify(nombre), token, name: nombre });

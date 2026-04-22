@@ -1,11 +1,14 @@
 // shared/js/mi-trabajo.js
-import { formatDate, daysBetween } from './utils.js';
+import { formatDate, daysBetween, actorBaseName, actorPersonName } from './utils.js';
 import { topNeedsAttention } from './priority.js';
 import { computePodio, computeRacha, computeSubmesaRace } from './gamification.js';
 import { determineState } from './mi-trabajo-state.js';
 
 export function renderMiTrabajo(mount, { activities, actor, today, formUrl }) {
-  const mine = activities.filter(a => (a.lidera_apoya || '').includes(actor.name));
+  // Multi-person-per-institution support: strip " — <person>" suffix so
+  // we match against the institutional label present in `lidera_apoya`.
+  const baseName = actorBaseName(actor.name);
+  const mine = activities.filter(a => (a.lidera_apoya || '').includes(baseName));
   const actionLink = (id, blocker) => {
     if (!formUrl) return '#';
     const u = new URL(formUrl);
@@ -17,11 +20,11 @@ export function renderMiTrabajo(mount, { activities, actor, today, formUrl }) {
   };
   const podio = computePodio(activities, today);
   const rank = (() => {
-    const i = podio.findIndex(p => p.actor.includes(actor.name));
+    const i = podio.findIndex(p => p.actor.includes(baseName));
     return i === -1 ? null : i + 1;
   })();
   const state = determineState(mine, today, { rankInPodio: rank });
-  const racha = computeRacha(actor.name, activities, today);
+  const racha = computeRacha(baseName, activities, today);
   const race = computeSubmesaRace(activities);
   const mySub = race.find(r => r.submesa === actor.submesa);
   const mySubRank = mySub ? race.indexOf(mySub) + 1 : null;
@@ -83,10 +86,11 @@ function daysSince(dateStr) {
 }
 
 function renderHero(state, actor, mine, racha, ctx) {
+  const greetingName = actorPersonName(actor.name).split(' ')[0];
   const configs = {
     A: {
       bg: 'linear-gradient(135deg,#78350f 0%,#b45309 40%,#d97706 100%)',
-      label: `Hola, ${actor.name.split(' ')[0]} 🏆`,
+      label: `Hola, ${greetingName} 🏆`,
       title: `Estás en ${ctx.rank}° lugar del podio del mes`,
       sub: `Has completado ${mine.filter(a => a.estado === 'Completado').length} actividades a tiempo. Mantén el ritmo.`,
       social: 'Tu nombre aparece público en el Panel este mes. La Mesa completa te ve como referente.',
@@ -94,7 +98,7 @@ function renderHero(state, actor, mine, racha, ctx) {
     },
     B: {
       bg: 'linear-gradient(135deg,var(--primary-dark),var(--primary) 50%,var(--primary-accent) 100%)',
-      label: `Hola, ${actor.name.split(' ')[0]} 👋`,
+      label: `Hola, ${greetingName} 👋`,
       title: 'Vas bien. Una completada más y <b>entras al podio</b>.',
       sub: `Tienes ${mine.filter(a => a.estado !== 'Completado').length} actividades activas. Tu submesa ${ctx.mySub ? `ocupa el ${ctx.mySubRank}° lugar` : 'está en la carrera'}.`,
       social: 'La carrera del podio es visible en el Panel. Tu nombre no aparece todavía — está a un paso de aparecer.',
@@ -102,7 +106,7 @@ function renderHero(state, actor, mine, racha, ctx) {
     },
     C: {
       bg: 'linear-gradient(135deg,#1e293b,#334155 60%,#475569)',
-      label: `Hola, ${actor.name.split(' ')[0]}`,
+      label: `Hola, ${greetingName}`,
       title: 'Este mes te has retrasado.',
       sub: `Tienes ${mine.filter(a => a.estado === 'Atrasado').length} actividades atrasadas${ctx.mySub ? ` y tu Submesa ${ctx.mySub.submesa} está en ${ctx.mySubRank}° lugar` : ''}.`,
       social: 'Lo que ven los demás: tu submesa en el ranking público. Tu nombre no aparece en ningún listado público, solo la ST lo sabe.',
