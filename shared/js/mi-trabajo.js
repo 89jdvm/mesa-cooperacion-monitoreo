@@ -36,9 +36,21 @@ export function renderMiTrabajo(mount, { activities, actor, today, formUrl }) {
   const isST = actor.rol === 'ST' || (actor.rol || '').startsWith('ST');
   const verifyQueue = isST ? activities.filter(a => a.estado === 'Reportada — pendiente verificación ST') : [];
 
+  // Build verify/reject URLs that hit the Apps Script Web App with the ST's
+  // own (slug, token), so server-side verificarToken passes.
+  const verifyUrl = (id, action) => {
+    if (!formUrl) return '#';
+    const u = new URL(formUrl);
+    u.searchParams.set('id', id);
+    u.searchParams.set('actor', actor.slug);
+    u.searchParams.set('token', actor.token || '');
+    u.searchParams.set('action', action);
+    return u.toString();
+  };
+
   mount.innerHTML = `
     ${renderHero(state, actor, mine, racha, { rank, mySubRank, mySub, isST, verifyCount: verifyQueue.length })}
-    ${isST ? renderVerifyCenter(verifyQueue) : ''}
+    ${isST ? renderVerifyCenter(verifyQueue, verifyUrl) : ''}
     ${renderMetaQ(mine, completed, atrasadas, qPct, today)}
     ${renderUrgent(urgent, today)}
     ${renderAgenda(mine, today)}
@@ -46,7 +58,7 @@ export function renderMiTrabajo(mount, { activities, actor, today, formUrl }) {
   `;
 }
 
-function renderVerifyCenter(items) {
+function renderVerifyCenter(items, verifyUrl) {
   if (!items.length) {
     return `
       <section class="panel" style="margin-bottom:16px;border-color:var(--blue-border);background:linear-gradient(135deg,var(--blue-bg),#dbeafe)">
@@ -56,24 +68,31 @@ function renderVerifyCenter(items) {
     `;
   }
   const rows = items.map(a => `
-    <div class="atn-item" data-id="${a.id}" style="border-top-color:#bfdbfe">
-      <div class="pill-dot" style="background:var(--blue);margin-top:5px"></div>
-      <div>
-        <div style="font-size:13px;font-weight:600;color:var(--ink)">${a.hito_operativo}</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:3px">
-          Reportado por <b style="color:var(--ink-2)">${a.lidera_apoya.split(/[,(/]/)[0].trim()}</b> · ${a.fecha_reporte ? 'hace ' + daysSince(a.fecha_reporte) + ' días' : 'sin fecha'}
+    <div style="padding:14px;border-radius:10px;background:#fff;border:1px solid var(--blue-border);margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px">
+        <div style="flex:1">
+          <div class="mono" style="font-size:10px;color:var(--muted)">${a.id}</div>
+          <div style="font-size:14px;font-weight:600;color:var(--ink);margin-top:2px">${a.hito_operativo}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">
+            Reportado por <b style="color:var(--ink-2)">${a.lidera_apoya.split(/[,(/]/)[0].trim()}</b> · ${a.fecha_reporte ? 'hace ' + daysSince(a.fecha_reporte) + ' días' : 'sin fecha'}
+          </div>
         </div>
-        ${a.enlace_evidencia ? `<div style="font-size:11px;margin-top:6px"><a href="${a.enlace_evidencia}" target="_blank" rel="noopener" style="color:var(--blue-ink);text-decoration:none;font-weight:600">📎 Ver evidencia →</a></div>` : ''}
       </div>
-      <div style="text-align:right">
-        <span class="badge verify">Verificar</span>
+      <div style="background:var(--bg);padding:10px 12px;border-radius:6px;font-size:12px;line-height:1.6;margin-bottom:10px">
+        <div><b style="color:var(--ink-2)">Producto esperado:</b> <span style="color:var(--ink-3)">${a.producto_verificable || '—'}</span></div>
+        <div><b style="color:var(--ink-2)">Evidencia mínima esperada:</b> <span style="color:var(--ink-3)">${a.evidencia_minima || '—'}</span></div>
+        ${a.enlace_evidencia ? `<div style="margin-top:6px"><b style="color:var(--ink-2)">Evidencia recibida:</b> <a href="${a.enlace_evidencia}" target="_blank" rel="noopener" style="color:var(--blue-ink);font-weight:600">📎 Abrir →</a></div>` : '<div style="margin-top:6px;color:#dc2626"><b>⚠ Sin enlace de evidencia adjunto</b></div>'}
+      </div>
+      <div style="display:flex;gap:8px">
+        <a href="${verifyUrl(a.id, 'verify')}" target="_blank" rel="noopener" style="background:#16a34a;color:#fff;padding:9px 16px;border-radius:7px;text-decoration:none;font-weight:600;font-size:13px">✓ Verificar</a>
+        <a href="${verifyUrl(a.id, 'reject')}" target="_blank" rel="noopener" style="background:#fff;color:#b45309;border:1px solid #d97706;padding:9px 16px;border-radius:7px;text-decoration:none;font-weight:600;font-size:13px">✗ Pedir más info</a>
       </div>
     </div>
   `).join('');
   return `
     <section class="panel" style="margin-bottom:16px;border:2px solid var(--blue-border);background:linear-gradient(180deg,var(--blue-bg),var(--surface))">
       <h4 style="color:var(--blue-ink)">🛡️ Centro de verificación <span class="sub" style="color:var(--blue-ink);opacity:0.7">${items.length} actividad${items.length > 1 ? 'es' : ''} reportada${items.length > 1 ? 's' : ''} esperan tu validación</span></h4>
-      <div style="font-size:12px;color:var(--ink-2);margin-bottom:12px;line-height:1.5">Revisa la evidencia adjunta de cada reporte. Si cumple, marca como verificada en el Google Sheet (columna <i>verificado_st</i>) y se cerrará el ciclo. Tiempo promedio por ítem: 2 min.</div>
+      <div style="font-size:12px;color:var(--ink-2);margin-bottom:12px;line-height:1.5">Compara lo recibido contra el producto esperado. Verificar marca como completada y publica en el dashboard. Pedir más info la devuelve al reportante con un mensaje. Tiempo promedio por ítem: 2 min.</div>
       ${rows}
     </section>
   `;

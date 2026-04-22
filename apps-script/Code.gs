@@ -574,6 +574,12 @@ function doGet(e) {
   const bloqueador = e.parameter.bloqueador === 'true';
   const actorSlug = e.parameter.actor || '';
   const token = e.parameter.token || '';
+  const action = e.parameter.action || ''; // '' | 'verify' | 'reject'
+
+  // ST-only verification flow: one-click confirm or reject from Mi trabajo.
+  if (action === 'verify' || action === 'reject') {
+    return doGetVerify({ id, actorSlug, token, action });
+  }
 
   const html = HtmlService.createHtmlOutput(`
     <!DOCTYPE html>
@@ -692,27 +698,282 @@ function procesarRespuesta(data) {
         registrarLog(ss, data.id, provincia, 'Completada reportada (pendiente verificación ST)', data.evidencia || '');
       }
 
-      // Notificar a la ST
-      const emailsST = obtenerEmailsST(ss, provincia);
-      if (emailsST.length > 0) {
+      // Notificar a la ST con botones one-click de verificar/rechazar
+      // Cada miembro de la ST recibe los enlaces personalizados con SU
+      // (slug, token) para que verificarToken pase del lado server.
+      const stActores = obtenerActoresParaActividad(ss, 'Secretaría Técnica (GADPS)', provincia);
+      // Si la búsqueda anterior no encontró ST (provincia diferente o nombre
+      // distinto en CSV), buscar por rol como fallback.
+      const stRecipients = stActores.length > 0 ? stActores : obtenerActoresST(ss, provincia);
+      stRecipients.forEach(st => {
         const tipo = data.bloqueador ? 'bloqueador' : 'completada';
-        enviarEmail(emailsST, {
+        const verifyUrl = getFormUrl(data.id, st.slug, st.token) + '&action=verify';
+        const rejectUrl = getFormUrl(data.id, st.slug, st.token) + '&action=reject';
+        enviarEmail([st.email], {
           asunto: `📝 Actividad ${tipo}: "${datos[i][colIndices.hito_operativo]}" (${data.id})`,
-          cuerpo: `<div style="font-family:sans-serif;padding:20px;">
-            <h3>Se ha reportado una actividad como <strong>${tipo}</strong></h3>
+          cuerpo: `<div style="font-family:Inter,sans-serif;padding:20px;max-width:560px">
+            <h3 style="margin-top:0">Se ha reportado una actividad como <strong>${tipo}</strong></h3>
             <p><strong>ID:</strong> ${data.id}</p>
             <p><strong>Actividad:</strong> ${datos[i][colIndices.hito_operativo]}</p>
-            ${data.evidencia ? `<p><strong>Evidencia:</strong> <a href="${data.evidencia}">${data.evidencia}</a></p>` : ''}
-            ${data.notas ? `<p><strong>Notas:</strong> ${data.notas}</p>` : ''}
-            <p style="margin-top:20px;"><em>Por favor verifica y actualiza el estado en el Google Sheet.</em></p>
+            <p><strong>Producto esperado:</strong> ${datos[i][colIndices.producto_verificable] || '—'}</p>
+            <p><strong>Evidencia mínima esperada:</strong> ${datos[i][colIndices.evidencia_minima] || '—'}</p>
+            ${data.evidencia ? `<p><strong>Evidencia recibida:</strong> <a href="${data.evidencia}">${data.evidencia}</a></p>` : ''}
+            ${data.notas ? `<p><strong>Notas del reportante:</strong> ${data.notas}</p>` : ''}
+            ${!data.bloqueador ? `
+            <div style="margin-top:24px;display:flex;gap:8px">
+              <a href="${verifyUrl}" style="background:#16a34a;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">✓ Verificar</a>
+              <a href="${rejectUrl}" style="background:#fff;color:#b45309;border:1px solid #d97706;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">✗ Pedir más info</a>
+            </div>
+            <p style="font-size:11px;color:#94a3b8;margin-top:14px">Verificar marca la actividad como completada y la publica en el dashboard. Pedir más info la devuelve al reportante.</p>
+            ` : ''}
           </div>`
         });
-      }
+      });
 
       return;
     }
   }
 
+  throw new Error('Actividad no encontrada: ' + data.id);
+}
+
+/**
+ * Devuelve actores con rol ST para una provincia, cada uno con su slug/token.
+ * Helper para los botones one-click de verificación.
+ */
+function obtenerActoresST(ss, provincia) {
+  const hoja = ss.getSheetByName('Actores');
+  if (!hoja) return [];
+  const datos = hoja.getDataRange().getValues();
+  const out = [];
+  for (let i = 1; i < datos.length; i++) {
+    const nombre = String(datos[i][0] || '').trim();
+    const email = datos[i][1];
+    const rol = datos[i][2];
+    const prov = datos[i][3];
+    const token = datos[i][4] || '';
+    if (!email || !nombre || prov !== provincia) continue;
+    if (rol === 'ST' || String(rol).startsWith('ST')) {
+      out.push({ email, slug: slugify(nombre), token, name: nombre });
+    }
+  }
+  return out;
+}
+
+/**
+ * One-click verification flow for ST members.
+ * Renders a confirmation page; when ST clicks the verify/reject link in their
+ * email, this is what they see. No form submission needed for verify; reject
+ * shows a textarea for the reason.
+ */
+function doGetVerify({ id, actorSlug, token, action }) {
+  const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+
+  // Identity check
+  if (!verificarToken(ss, actorSlug, token)) {
+    return HtmlService.createHtmlOutput(_renderVerifyPage({
+      title: '⚠ Identidad no verificada',
+      body: 'Este enlace solo funciona si lo abres desde tu correo personal de la Secretaría Técnica.',
+      color: '#b45309'
+    }));
+  }
+
+  // Role check — only ST can verify
+  const actor = obtenerActorPorSlug(ss, actorSlug);
+  if (!actor || !(actor.rol === 'ST' || String(actor.rol).startsWith('ST'))) {
+    return HtmlService.createHtmlOutput(_renderVerifyPage({
+      title: '⚠ Sin permiso',
+      body: 'Solo la Secretaría Técnica puede verificar reportes. Tu rol actual: ' + (actor?.rol || 'desconocido') + '.',
+      color: '#b45309'
+    }));
+  }
+
+  if (action === 'verify') {
+    try {
+      const result = procesarVerificacion(id, actor);
+      return HtmlService.createHtmlOutput(_renderVerifyPage({
+        title: '✓ Actividad verificada',
+        body: `<strong>${result.actividad}</strong><br><br>El estado pasa a "Completado" y queda visible en el dashboard público en el siguiente ciclo.<br><br><span style="color:#94a3b8;font-size:12px">Reportada por: ${result.reportadaPor}</span>`,
+        color: '#16a34a'
+      }));
+    } catch (err) {
+      return HtmlService.createHtmlOutput(_renderVerifyPage({
+        title: '✗ Error al verificar',
+        body: err.message,
+        color: '#dc2626'
+      }));
+    }
+  }
+
+  if (action === 'reject') {
+    // Render form with textarea for the reason
+    return HtmlService.createHtmlOutput(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+        <style>
+          body { font-family:'Inter',sans-serif; background:#f8fafc; padding:2rem; display:flex; justify-content:center }
+          .card { background:#fff; border-radius:12px; padding:2rem; max-width:480px; width:100%; border:1px solid #e2e8f0 }
+          h2 { font-size:1.25rem; margin:0 0 0.5rem; color:#b45309 }
+          p { color:#6b7280; font-size:0.9rem }
+          label { display:block; font-size:0.8rem; font-weight:600; color:#374151; margin:1rem 0 0.35rem }
+          textarea { width:100%; padding:0.6rem; border:1px solid #d1d5db; border-radius:8px; font-family:inherit; font-size:0.9rem; height:100px }
+          button { background:#d97706; color:#fff; border:none; padding:0.85rem 2rem; border-radius:8px; font-weight:700; font-size:1rem; cursor:pointer; width:100%; margin-top:1rem }
+          button:hover { background:#b45309 }
+          .ok { text-align:center; padding:3rem }
+          .ok h2 { color:#16a34a }
+        </style>
+      </head>
+      <body>
+        <div class="card" id="form-card">
+          <h2>✗ Pedir más información</h2>
+          <p>Devolver el reporte de actividad <strong>${id}</strong> al reportante con un motivo.</p>
+          <form onsubmit="submitReject(event)">
+            <input type="hidden" id="actId" value="${id}">
+            <input type="hidden" id="actorSlug" value="${actorSlug}">
+            <input type="hidden" id="actorToken" value="${token}">
+            <label>Motivo (será enviado al reportante):</label>
+            <textarea id="motivo" placeholder="Ej: Necesito el acta firmada en lugar del borrador, o falta la lista de asistencia..." required></textarea>
+            <button type="submit">Devolver y notificar al reportante</button>
+          </form>
+        </div>
+        <script>
+          function submitReject(e) {
+            e.preventDefault();
+            const data = {
+              id: document.getElementById('actId').value,
+              actor: document.getElementById('actorSlug').value,
+              token: document.getElementById('actorToken').value,
+              motivo: document.getElementById('motivo').value
+            };
+            google.script.run
+              .withSuccessHandler(() => {
+                document.getElementById('form-card').innerHTML = '<div class="ok"><h2>✓ Devuelto</h2><p>El reportante fue notificado. La actividad volvió a su estado anterior.</p></div>';
+              })
+              .withFailureHandler(err => alert('Error: ' + err.message))
+              .procesarRechazo(data);
+          }
+        </script>
+      </body>
+      </html>
+    `);
+  }
+}
+
+function _renderVerifyPage({ title, body, color }) {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+      <style>
+        body { font-family:'Inter',sans-serif; background:#f8fafc; padding:2rem; display:flex; justify-content:center }
+        .card { background:#fff; border-radius:12px; padding:3rem 2rem; max-width:480px; width:100%; border:1px solid #e2e8f0; text-align:center }
+        h2 { font-size:1.5rem; margin:0 0 1rem; color:${color} }
+        .body { color:#374151; font-size:0.95rem; line-height:1.6 }
+      </style>
+    </head>
+    <body>
+      <div class="card"><h2>${title}</h2><div class="body">${body}</div></div>
+    </body>
+    </html>
+  `;
+}
+
+/**
+ * Aplica la verificación: cambia estado a Completado, marca verificado_st=TRUE,
+ * registra log, devuelve datos para el render.
+ */
+function procesarVerificacion(id, stActor) {
+  const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+  const provincia = id.startsWith('ORL') ? 'Orellana' : 'Sucumbíos';
+  const hoja = ss.getSheetByName(provincia);
+  if (!hoja) throw new Error('Hoja no encontrada: ' + provincia);
+
+  const datos = hoja.getDataRange().getValues();
+  const colIndices = getColumnIndices(datos[0]);
+
+  for (let i = 1; i < datos.length; i++) {
+    if (datos[i][colIndices.id] !== id) continue;
+
+    const estadoActual = datos[i][colIndices.estado];
+    if (estadoActual !== 'Reportada — pendiente verificación ST') {
+      throw new Error('La actividad no está pendiente de verificación. Estado actual: ' + estadoActual);
+    }
+
+    hoja.getRange(i + 1, colIndices.estado + 1).setValue('Completado');
+    hoja.getRange(i + 1, colIndices.verificado_st + 1).setValue(true);
+    hoja.getRange(i + 1, colIndices.porcentaje + 1).setValue(100);
+
+    registrarLog(ss, id, provincia, 'Verificada por ST', stActor.name);
+
+    return {
+      actividad: datos[i][colIndices.hito_operativo],
+      reportadaPor: datos[i][colIndices.lidera_apoya]
+    };
+  }
+  throw new Error('Actividad no encontrada: ' + id);
+}
+
+/**
+ * Procesa el rechazo: devuelve la actividad al estado anterior + notifica al
+ * reportante con el motivo. Llamado vía google.script.run desde la página
+ * de rechazo.
+ */
+function procesarRechazo(data) {
+  const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+
+  if (!verificarToken(ss, data.actor, data.token)) {
+    throw new Error('Identidad no verificada.');
+  }
+  const actor = obtenerActorPorSlug(ss, data.actor);
+  if (!actor || !(actor.rol === 'ST' || String(actor.rol).startsWith('ST'))) {
+    throw new Error('Solo la ST puede rechazar reportes.');
+  }
+  if (!data.motivo || data.motivo.trim().length < 5) {
+    throw new Error('El motivo es obligatorio (mínimo 5 caracteres).');
+  }
+
+  const provincia = data.id.startsWith('ORL') ? 'Orellana' : 'Sucumbíos';
+  const hoja = ss.getSheetByName(provincia);
+  if (!hoja) throw new Error('Hoja no encontrada: ' + provincia);
+
+  const datos = hoja.getDataRange().getValues();
+  const colIndices = getColumnIndices(datos[0]);
+
+  for (let i = 1; i < datos.length; i++) {
+    if (datos[i][colIndices.id] !== data.id) continue;
+    const actividad = datos[i][colIndices.hito_operativo];
+    const lideraApoya = datos[i][colIndices.lidera_apoya];
+
+    // Revert: estado vuelve a "No iniciado" para que aparezca como pendiente
+    // de re-reporte en Mi trabajo del actor.
+    hoja.getRange(i + 1, colIndices.estado + 1).setValue('No iniciado');
+    hoja.getRange(i + 1, colIndices.fecha_reporte + 1).setValue('');
+    hoja.getRange(i + 1, colIndices.notas_bloqueador + 1).setValue('Devuelto por ST: ' + data.motivo);
+
+    registrarLog(ss, data.id, provincia, 'Rechazado por ST', actor.name + ' — motivo: ' + data.motivo);
+
+    // Notificar a los actores responsables
+    const reportantes = obtenerActoresParaActividad(ss, lideraApoya, provincia);
+    reportantes.forEach(r => {
+      const dashUrl = getDashUrlForActor(provincia, r.slug, r.token);
+      enviarEmail([r.email], {
+        asunto: `↩ Reporte devuelto: "${actividad}" (${data.id})`,
+        cuerpo: `<div style="font-family:Inter,sans-serif;padding:20px;max-width:560px">
+          <h3 style="margin-top:0;color:#b45309">La Secretaría Técnica devolvió tu reporte para que lo completes</h3>
+          <p><strong>Actividad:</strong> ${actividad}</p>
+          <p><strong>Motivo:</strong> ${data.motivo}</p>
+          <p style="margin-top:20px"><a href="${dashUrl}" style="background:#1a6b3c;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:700">Abrir mi trabajo</a></p>
+          <p style="font-size:12px;color:#94a3b8;margin-top:14px">Cuando ajustes lo solicitado, vuelve a marcar "Ya la completé" desde tu panel.</p>
+        </div>`
+      });
+    });
+    return;
+  }
   throw new Error('Actividad no encontrada: ' + data.id);
 }
 
