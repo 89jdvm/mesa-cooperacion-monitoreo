@@ -211,10 +211,15 @@ function enviarResumenSemanal() {
     const headers = datos[0];
     const colIndices = getColumnIndices(headers);
 
+    // Match against the institutional base, not the raw nombre — otherwise
+    // "Inst — Person" suffixed actors never match `lidera_apoya` cells which
+    // hold only the institutional label.
+    const baseNombre = actorBaseName(nombre);
     const misActividades = [];
     for (let j = 1; j < datos.length; j++) {
       const fila = datos[j];
-      if (fila[colIndices.lidera_apoya].includes(nombre) || actorCoincide(fila[colIndices.lidera_apoya], nombre)) {
+      const la = fila[colIndices.lidera_apoya];
+      if (la.includes(baseNombre) || actorCoincide(la, baseNombre)) {
         if (fila[colIndices.estado] !== 'Completado') {
           const fechaLimite = new Date(fila[colIndices.fecha_limite]);
           const diasRestantes = Math.ceil((fechaLimite - hoy) / (1000 * 60 * 60 * 24));
@@ -754,6 +759,17 @@ function obtenerEmailsActor(ss, actorTexto, provincia) {
 // `actorTexto` (the "Lidera / Apoya" cell of an activity row), filtered to
 // the given provincia. Used to build per-actor personalised formUrl that
 // includes their (slug, token) for verificarToken on submit.
+// Strip personal-name suffix to derive the institutional base name.
+// Mirrors shared/js/utils.js:actorBaseName so server and client agree.
+// "Dirección Gestión Ambiental GADPS — Holger Salas" → "Dirección Gestión Ambiental GADPS"
+// "Secretaría Técnica (GADPS) - Apoyo" → "Secretaría Técnica (GADPS)"
+function actorBaseName(name) {
+  return String(name || '')
+    .replace(/\s*—\s*.+$/, '')
+    .replace(/\s*-\s*(Apoyo|\d+)$/i, '')
+    .trim();
+}
+
 function obtenerActoresParaActividad(ss, actorTexto, provincia) {
   const hoja = ss.getSheetByName('Actores');
   if (!hoja) return [];
@@ -773,12 +789,7 @@ function obtenerActoresParaActividad(ss, actorTexto, provincia) {
     const token = datos[i][4] || '';
 
     if (!email || prov !== provincia || !nombre) continue;
-    // Strip either legacy " - Apoyo"/" - N" OR the new " — <Person>" suffix
-    // used for multiple people sharing an institution.
-    const base = nombre
-      .replace(/\s*—\s*.+$/, '')
-      .replace(/\s*-\s*(Apoyo|\d+)$/i, '')
-      .trim();
+    const base = actorBaseName(nombre);
 
     if (tokens.some(t => t === base || t === nombre)) {
       out.push({ email, slug: slugify(nombre), token, name: nombre });

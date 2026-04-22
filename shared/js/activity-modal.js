@@ -1,5 +1,5 @@
 // shared/js/activity-modal.js
-import { formatDate } from './utils.js';
+import { formatDate, actorBaseName } from './utils.js';
 
 let activities = [];
 let actor = null;
@@ -64,7 +64,9 @@ function close() {
 }
 
 function renderActions(a) {
-  const isActorResponsible = actor && a.lidera_apoya.includes(actor.name);
+  // Match the activity's lidera_apoya against the actor's institutional base
+  // so users with " — <Person>" suffix still see the action buttons.
+  const isActorResponsible = actor && a.lidera_apoya.includes(actorBaseName(actor.name));
   if (!isActorResponsible || a.estado === 'Completado') return '';
   if (!formUrl) return '';
   const buildUrl = (blocker) => {
