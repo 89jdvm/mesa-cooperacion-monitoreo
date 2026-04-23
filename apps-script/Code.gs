@@ -3,7 +3,7 @@
    Google Apps Script · Pegar en script.google.com
 
    Configuración:
-   1. Crear un Google Sheet con las hojas: Orellana, Sucumbíos, Actores, Log, Config
+   1. Crear un Google Sheet con las hojas: Sucumbíos, Actores, Log, Config
    2. Pegar este script en Extensiones > Apps Script
    3. Configurar triggers (ver función crearTriggers)
    ============================================================ */
@@ -12,7 +12,6 @@
 const CONFIG = {
   SHEET_ID: '', // <-- Pegar ID del Google Sheet aquí
   EMAIL_REMITENTE_NOMBRE: 'Mesa de Cooperación — Monitoreo',
-  DASHBOARD_URL_ORELLANA: 'https://89jdvm.github.io/mesa-cooperacion-monitoreo/orellana/',
   DASHBOARD_URL_SUCUMBIOS: 'https://89jdvm.github.io/mesa-cooperacion-monitoreo/sucumbios/',
   DIAS_ANTES_RECORDATORIO: 7,
   DIAS_ANTES_ESCALACION_WARNING: 3,
@@ -64,124 +63,123 @@ function enviarRecordatoriosDiarios() {
   const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
   const hoy = new Date();
   hoy.setHours(0, 0, 0, 0);
+  const provincia = 'Sucumbíos';
 
-  ['Orellana', 'Sucumbíos'].forEach(provincia => {
-    const hoja = ss.getSheetByName(provincia);
-    if (!hoja) return;
+  const hoja = ss.getSheetByName(provincia);
+  if (!hoja) return;
 
-    const datos = hoja.getDataRange().getValues();
-    const headers = datos[0];
-    const colIndices = getColumnIndices(headers);
+  const datos = hoja.getDataRange().getValues();
+  const headers = datos[0];
+  const colIndices = getColumnIndices(headers);
 
-    for (let i = 1; i < datos.length; i++) {
-      const fila = datos[i];
-      const estado = fila[colIndices.estado];
+  for (let i = 1; i < datos.length; i++) {
+    const fila = datos[i];
+    const estado = fila[colIndices.estado];
 
-      // Saltar completadas y reportadas (pendientes de verificación ST)
-      if (estado === 'Completado') continue;
-      if (estado === 'Reportada — pendiente verificación ST') continue;
+    // Saltar completadas y reportadas (pendientes de verificación ST)
+    if (estado === 'Completado') continue;
+    if (estado === 'Reportada — pendiente verificación ST') continue;
 
-      const fechaLimite = new Date(fila[colIndices.fecha_limite]);
-      fechaLimite.setHours(0, 0, 0, 0);
-      const diasRestantes = Math.ceil((fechaLimite - hoy) / (1000 * 60 * 60 * 24));
-      const actorTexto = fila[colIndices.lidera_apoya];
-      const actividad = fila[colIndices.hito_operativo];
-      const id = fila[colIndices.id];
-      const que = fila[colIndices.que_se_hace];
-      const producto = fila[colIndices.producto_verificable];
-      const evidencia = fila[colIndices.evidencia_minima];
+    const fechaLimite = new Date(fila[colIndices.fecha_limite]);
+    fechaLimite.setHours(0, 0, 0, 0);
+    const diasRestantes = Math.ceil((fechaLimite - hoy) / (1000 * 60 * 60 * 24));
+    const actorTexto = fila[colIndices.lidera_apoya];
+    const actividad = fila[colIndices.hito_operativo];
+    const id = fila[colIndices.id];
+    const que = fila[colIndices.que_se_hace];
+    const producto = fila[colIndices.producto_verificable];
+    const evidencia = fila[colIndices.evidencia_minima];
 
-      // Each actor gets a personalised formUrl with their (slug, token)
-      // so the submit form passes verificarToken on the server side.
-      const actores = obtenerActoresParaActividad(ss, actorTexto, provincia);
-      if (actores.length === 0) continue;
+    // Each actor gets a personalised formUrl with their (slug, token)
+    // so the submit form passes verificarToken on the server side.
+    const actores = obtenerActoresParaActividad(ss, actorTexto, provincia);
+    if (actores.length === 0) continue;
 
-      const dashUrl = provincia === 'Orellana' ? CONFIG.DASHBOARD_URL_ORELLANA : CONFIG.DASHBOARD_URL_SUCUMBIOS;
+    const dashUrl = CONFIG.DASHBOARD_URL_SUCUMBIOS;
 
-      // 7 días antes
-      if (diasRestantes === CONFIG.DIAS_ANTES_RECORDATORIO) {
-        actores.forEach(a => {
-          enviarEmail([a.email], {
-            asunto: `📋 Recordatorio: "${actividad}" vence el ${formatDate(fechaLimite)}`,
-            cuerpo: generarEmailRecordatorio({
-              provincia, actividad, que, producto, evidencia, actorTexto,
-              fechaLimite, diasRestantes, dashUrl,
-              formUrl: getFormUrl(id, a.slug, a.token),
-              tipo: 'recordatorio'
-            })
-          });
+    // 7 días antes
+    if (diasRestantes === CONFIG.DIAS_ANTES_RECORDATORIO) {
+      actores.forEach(a => {
+        enviarEmail([a.email], {
+          asunto: `📋 Recordatorio: "${actividad}" vence el ${formatDate(fechaLimite)}`,
+          cuerpo: generarEmailRecordatorio({
+            provincia, actividad, que, producto, evidencia, actorTexto,
+            fechaLimite, diasRestantes, dashUrl,
+            formUrl: getFormUrl(id, a.slug, a.token),
+            tipo: 'recordatorio'
+          })
         });
-        registrarLog(ss, id, provincia, 'Recordatorio 7 días', actores.map(a => a.email).join(', '));
-      }
-
-      // Día del plazo
-      if (diasRestantes === 0) {
-        actores.forEach(a => {
-          enviarEmail([a.email], {
-            asunto: `⏰ Hoy vence: "${actividad}" — confirma su estado`,
-            cuerpo: generarEmailRecordatorio({
-              provincia, actividad, que, producto, evidencia, actorTexto,
-              fechaLimite, diasRestantes, dashUrl,
-              formUrl: getFormUrl(id, a.slug, a.token),
-              tipo: 'vencimiento'
-            })
-          });
-        });
-        registrarLog(ss, id, provincia, 'Aviso día de vencimiento', actores.map(a => a.email).join(', '));
-      }
-
-      // 3 días de atraso — advertencia de escalación
-      if (diasRestantes === -CONFIG.DIAS_ANTES_ESCALACION_WARNING) {
-        hoja.getRange(i + 1, colIndices.estado + 1).setValue('Atrasado');
-
-        actores.forEach(a => {
-          enviarEmail([a.email], {
-            asunto: `📌 Actividad pendiente: "${actividad}" — ${Math.abs(diasRestantes)} días de atraso`,
-            cuerpo: generarEmailRecordatorio({
-              provincia, actividad, que, producto, evidencia, actorTexto,
-              fechaLimite, diasRestantes, dashUrl,
-              formUrl: getFormUrl(id, a.slug, a.token),
-              tipo: 'atraso_warning'
-            })
-          });
-        });
-        // Notify ST in copy (no actionable buttons — informational)
-        const emailsST = obtenerEmailsST(ss, provincia);
-        if (emailsST.length) {
-          enviarEmail(emailsST, {
-            asunto: `[ST] Atraso 3 días: "${actividad}" en ${provincia}`,
-            cuerpo: `<p>La actividad <strong>${actividad}</strong> (${id}) está atrasada 3 días. Asignada a: ${actorTexto}.</p>`
-          });
-        }
-        registrarLog(ss, id, provincia, 'Advertencia atraso (3 días)', actores.map(a => a.email).join(', '));
-      }
-
-      // 7+ días de atraso — escalación
-      if (diasRestantes === -CONFIG.DIAS_ANTES_ESCALACION) {
-        actores.forEach(a => {
-          enviarEmail([a.email], {
-            asunto: `🔴 Escalación: "${actividad}" — ${Math.abs(diasRestantes)} días de atraso`,
-            cuerpo: generarEmailRecordatorio({
-              provincia, actividad, que, producto, evidencia, actorTexto,
-              fechaLimite, diasRestantes, dashUrl,
-              formUrl: getFormUrl(id, a.slug, a.token),
-              tipo: 'escalacion'
-            })
-          });
-        });
-        const emailsST = obtenerEmailsST(ss, provincia);
-        const emailsCSE = obtenerEmailsCSE(ss, provincia);
-        const escalados = [...new Set([...emailsST, ...emailsCSE])];
-        if (escalados.length) {
-          enviarEmail(escalados, {
-            asunto: `[ESCALACIÓN] "${actividad}" en ${provincia} — 7 días de atraso`,
-            cuerpo: `<p>La actividad <strong>${actividad}</strong> (${id}) está atrasada 7 días. Asignada a: ${actorTexto}. Requiere intervención de la CSE / Presidencia.</p>`
-          });
-        }
-        registrarLog(ss, id, provincia, 'ESCALACIÓN a CSE/Presidencia', actores.map(a => a.email).join(', '));
-      }
+      });
+      registrarLog(ss, id, provincia, 'Recordatorio 7 días', actores.map(a => a.email).join(', '));
     }
-  });
+
+    // Día del plazo
+    if (diasRestantes === 0) {
+      actores.forEach(a => {
+        enviarEmail([a.email], {
+          asunto: `⏰ Hoy vence: "${actividad}" — confirma su estado`,
+          cuerpo: generarEmailRecordatorio({
+            provincia, actividad, que, producto, evidencia, actorTexto,
+            fechaLimite, diasRestantes, dashUrl,
+            formUrl: getFormUrl(id, a.slug, a.token),
+            tipo: 'vencimiento'
+          })
+        });
+      });
+      registrarLog(ss, id, provincia, 'Aviso día de vencimiento', actores.map(a => a.email).join(', '));
+    }
+
+    // 3 días de atraso — advertencia de escalación
+    if (diasRestantes === -CONFIG.DIAS_ANTES_ESCALACION_WARNING) {
+      hoja.getRange(i + 1, colIndices.estado + 1).setValue('Atrasado');
+
+      actores.forEach(a => {
+        enviarEmail([a.email], {
+          asunto: `📌 Actividad pendiente: "${actividad}" — ${Math.abs(diasRestantes)} días de atraso`,
+          cuerpo: generarEmailRecordatorio({
+            provincia, actividad, que, producto, evidencia, actorTexto,
+            fechaLimite, diasRestantes, dashUrl,
+            formUrl: getFormUrl(id, a.slug, a.token),
+            tipo: 'atraso_warning'
+          })
+        });
+      });
+      // Notify ST in copy (no actionable buttons — informational)
+      const emailsST = obtenerEmailsST(ss, provincia);
+      if (emailsST.length) {
+        enviarEmail(emailsST, {
+          asunto: `[ST] Atraso 3 días: "${actividad}" en ${provincia}`,
+          cuerpo: `<p>La actividad <strong>${actividad}</strong> (${id}) está atrasada 3 días. Asignada a: ${actorTexto}.</p>`
+        });
+      }
+      registrarLog(ss, id, provincia, 'Advertencia atraso (3 días)', actores.map(a => a.email).join(', '));
+    }
+
+    // 7+ días de atraso — escalación
+    if (diasRestantes === -CONFIG.DIAS_ANTES_ESCALACION) {
+      actores.forEach(a => {
+        enviarEmail([a.email], {
+          asunto: `🔴 Escalación: "${actividad}" — ${Math.abs(diasRestantes)} días de atraso`,
+          cuerpo: generarEmailRecordatorio({
+            provincia, actividad, que, producto, evidencia, actorTexto,
+            fechaLimite, diasRestantes, dashUrl,
+            formUrl: getFormUrl(id, a.slug, a.token),
+            tipo: 'escalacion'
+          })
+        });
+      });
+      const emailsST = obtenerEmailsST(ss, provincia);
+      const emailsCSE = obtenerEmailsCSE(ss, provincia);
+      const escalados = [...new Set([...emailsST, ...emailsCSE])];
+      if (escalados.length) {
+        enviarEmail(escalados, {
+          asunto: `[ESCALACIÓN] "${actividad}" en ${provincia} — 7 días de atraso`,
+          cuerpo: `<p>La actividad <strong>${actividad}</strong> (${id}) está atrasada 7 días. Asignada a: ${actorTexto}. Requiere intervención de la CSE / Presidencia.</p>`
+        });
+      }
+      registrarLog(ss, id, provincia, 'ESCALACIÓN a CSE/Presidencia', actores.map(a => a.email).join(', '));
+    }
+  }
 }
 
 /**
@@ -249,7 +247,7 @@ function enviarResumenSemanal() {
     });
   }
 
-  registrarLog(ss, 'GLOBAL', 'Ambas', 'Resumen semanal enviado', 'Todos los actores');
+  registrarLog(ss, 'GLOBAL', 'Sucumbíos', 'Resumen semanal enviado', 'Todos los actores');
 }
 
 /**
@@ -266,58 +264,57 @@ function verificarInformeMensual() {
  */
 function enviarInformeMensual() {
   const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+  const provincia = 'Sucumbíos';
 
-  ['Orellana', 'Sucumbíos'].forEach(provincia => {
-    const hoja = ss.getSheetByName(provincia);
-    if (!hoja) return;
+  const hoja = ss.getSheetByName(provincia);
+  if (!hoja) return;
 
-    const datos = hoja.getDataRange().getValues();
-    const headers = datos[0];
-    const colIndices = getColumnIndices(headers);
+  const datos = hoja.getDataRange().getValues();
+  const headers = datos[0];
+  const colIndices = getColumnIndices(headers);
 
-    // Calcular estadísticas
-    const total = datos.length - 1;
-    let completadas = 0, atrasadas = 0, enProgreso = 0, pendientes = 0;
-    const actoresStats = {};
+  // Calcular estadísticas
+  const total = datos.length - 1;
+  let completadas = 0, atrasadas = 0, enProgreso = 0, pendientes = 0;
+  const actoresStats = {};
 
-    for (let i = 1; i < datos.length; i++) {
-      const fila = datos[i];
-      const estado = fila[colIndices.estado];
-      const actor = fila[colIndices.lidera_apoya];
+  for (let i = 1; i < datos.length; i++) {
+    const fila = datos[i];
+    const estado = fila[colIndices.estado];
+    const actor = fila[colIndices.lidera_apoya];
 
-      if (estado === 'Completado') completadas++;
-      else if (estado === 'Atrasado') atrasadas++;
-      else if (estado === 'En progreso') enProgreso++;
-      else pendientes++;
+    if (estado === 'Completado') completadas++;
+    else if (estado === 'Atrasado') atrasadas++;
+    else if (estado === 'En progreso') enProgreso++;
+    else pendientes++;
 
-      if (!actoresStats[actor]) actoresStats[actor] = { total: 0, completadas: 0, atrasadas: 0 };
-      actoresStats[actor].total++;
-      if (estado === 'Completado') actoresStats[actor].completadas++;
-      if (estado === 'Atrasado') actoresStats[actor].atrasadas++;
-    }
+    if (!actoresStats[actor]) actoresStats[actor] = { total: 0, completadas: 0, atrasadas: 0 };
+    actoresStats[actor].total++;
+    if (estado === 'Completado') actoresStats[actor].completadas++;
+    if (estado === 'Atrasado') actoresStats[actor].atrasadas++;
+  }
 
-    const pct = total > 0 ? Math.round((completadas / total) * 100) : 0;
-    const dashUrl = provincia === 'Orellana' ? CONFIG.DASHBOARD_URL_ORELLANA : CONFIG.DASHBOARD_URL_SUCUMBIOS;
+  const pct = total > 0 ? Math.round((completadas / total) * 100) : 0;
+  const dashUrl = CONFIG.DASHBOARD_URL_SUCUMBIOS;
 
-    // Generar tabla de actores
-    const actoresOrdenados = Object.entries(actoresStats)
-      .sort((a, b) => (b[1].completadas / b[1].total) - (a[1].completadas / a[1].total));
+  // Generar tabla de actores
+  const actoresOrdenados = Object.entries(actoresStats)
+    .sort((a, b) => (b[1].completadas / b[1].total) - (a[1].completadas / a[1].total));
 
-    const cuerpo = generarEmailMensual(provincia, {
-      total, completadas, atrasadas, enProgreso, pendientes, pct,
-      actoresOrdenados, dashUrl
-    });
-
-    // Obtener TODOS los emails (miembros incluidos)
-    const todosEmails = obtenerTodosEmails(ss, provincia);
-
-    enviarEmail(todosEmails, {
-      asunto: `📈 Informe mensual — Mesa de Cooperación de ${provincia} — ${getMesAnio()}`,
-      cuerpo: cuerpo
-    });
-
-    registrarLog(ss, 'MENSUAL', provincia, `Informe mensual ${getMesAnio()}`, `${todosEmails.length} destinatarios`);
+  const cuerpo = generarEmailMensual(provincia, {
+    total, completadas, atrasadas, enProgreso, pendientes, pct,
+    actoresOrdenados, dashUrl
   });
+
+  // Obtener TODOS los emails (miembros incluidos)
+  const todosEmails = obtenerTodosEmails(ss, provincia);
+
+  enviarEmail(todosEmails, {
+    asunto: `📈 Informe mensual — Mesa de Cooperación de ${provincia} — ${getMesAnio()}`,
+    cuerpo: cuerpo
+  });
+
+  registrarLog(ss, 'MENSUAL', provincia, `Informe mensual ${getMesAnio()}`, `${todosEmails.length} destinatarios`);
 }
 
 // ---- GENERADORES DE EMAIL HTML ----
@@ -671,8 +668,7 @@ function procesarRespuesta(data) {
     throw new Error('Identidad no verificada. Abre el formulario desde tu enlace personal en tu email o desde Mi trabajo en el dashboard.');
   }
 
-  // Determinar provincia por prefijo del ID
-  const provincia = data.id.startsWith('ORL') ? 'Orellana' : 'Sucumbíos';
+  const provincia = 'Sucumbíos';
   const hoja = ss.getSheetByName(provincia);
   if (!hoja) throw new Error('Hoja no encontrada');
 
@@ -889,7 +885,7 @@ function _renderVerifyPage({ title, body, color }) {
  */
 function procesarVerificacion(id, stActor) {
   const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
-  const provincia = id.startsWith('ORL') ? 'Orellana' : 'Sucumbíos';
+  const provincia = 'Sucumbíos';
   const hoja = ss.getSheetByName(provincia);
   if (!hoja) throw new Error('Hoja no encontrada: ' + provincia);
 
@@ -937,7 +933,7 @@ function procesarRechazo(data) {
     throw new Error('El motivo es obligatorio (mínimo 5 caracteres).');
   }
 
-  const provincia = data.id.startsWith('ORL') ? 'Orellana' : 'Sucumbíos';
+  const provincia = 'Sucumbíos';
   const hoja = ss.getSheetByName(provincia);
   if (!hoja) throw new Error('Hoja no encontrada: ' + provincia);
 
@@ -1152,7 +1148,7 @@ function getFormUrl(id, actorSlug, token) {
 
 // Build a personalized dashboard URL for a specific actor slug + token.
 function getDashUrlForActor(provincia, actorSlug, token) {
-  const base = provincia === 'Orellana' ? CONFIG.DASHBOARD_URL_ORELLANA : CONFIG.DASHBOARD_URL_SUCUMBIOS;
+  const base = CONFIG.DASHBOARD_URL_SUCUMBIOS;
   if (!actorSlug || !token) return base;
   const sep = base.includes('?') ? '&' : '?';
   return base + sep + 'actor=' + encodeURIComponent(actorSlug) + '&token=' + encodeURIComponent(token) + '#mi-trabajo';
@@ -1224,46 +1220,45 @@ function testEnviarTodosLosTipos() {
   const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
   const myEmail = Session.getActiveUser().getEmail();
   if (!myEmail) throw new Error('No se pudo detectar tu email. Ejecuta autenticado.');
+  const provincia = 'Sucumbíos';
 
-  ['Orellana', 'Sucumbíos'].forEach(provincia => {
-    const hoja = ss.getSheetByName(provincia);
-    if (!hoja) return;
-    const datos = hoja.getDataRange().getValues();
-    if (datos.length < 2) return;
-    const headers = datos[0];
-    const cols = getColumnIndices(headers);
-    const fila = datos[1];
+  const hoja = ss.getSheetByName(provincia);
+  if (!hoja) return;
+  const datos = hoja.getDataRange().getValues();
+  if (datos.length < 2) return;
+  const headers = datos[0];
+  const cols = getColumnIndices(headers);
+  const fila = datos[1];
 
-    // Use the first matching actor for this activity to inject a real token
-    // into the test formUrl so the "Ya la completé" button validates end-to-end.
-    const actores = obtenerActoresParaActividad(ss, fila[cols.lidera_apoya], provincia);
-    const a = actores[0] || { slug: '', token: '' };
+  // Use the first matching actor for this activity to inject a real token
+  // into the test formUrl so the "Ya la completé" button validates end-to-end.
+  const actores = obtenerActoresParaActividad(ss, fila[cols.lidera_apoya], provincia);
+  const a = actores[0] || { slug: '', token: '' };
 
-    const base = {
-      provincia,
-      actividad: fila[cols.hito_operativo],
-      que: fila[cols.que_se_hace],
-      producto: fila[cols.producto_verificable],
-      evidencia: fila[cols.evidencia_minima],
-      actorTexto: fila[cols.lidera_apoya],
-      fechaLimite: new Date(),
-      dashUrl: provincia === 'Orellana' ? CONFIG.DASHBOARD_URL_ORELLANA : CONFIG.DASHBOARD_URL_SUCUMBIOS,
-      formUrl: getFormUrl(fila[cols.id], a.slug, a.token)
-    };
+  const base = {
+    provincia,
+    actividad: fila[cols.hito_operativo],
+    que: fila[cols.que_se_hace],
+    producto: fila[cols.producto_verificable],
+    evidencia: fila[cols.evidencia_minima],
+    actorTexto: fila[cols.lidera_apoya],
+    fechaLimite: new Date(),
+    dashUrl: CONFIG.DASHBOARD_URL_SUCUMBIOS,
+    formUrl: getFormUrl(fila[cols.id], a.slug, a.token)
+  };
 
-    ['recordatorio', 'vencimiento', 'atraso_warning', 'escalacion'].forEach(tipo => {
-      const diasRestantes = tipo === 'recordatorio' ? 7
-        : tipo === 'vencimiento' ? 0
-        : tipo === 'atraso_warning' ? -3
-        : -7;
-      enviarEmail([myEmail], {
-        asunto: `[TEST · ${tipo.toUpperCase()}] ${provincia} — ${base.actividad}`,
-        cuerpo: generarEmailRecordatorio({ ...base, diasRestantes, tipo })
-      });
+  ['recordatorio', 'vencimiento', 'atraso_warning', 'escalacion'].forEach(tipo => {
+    const diasRestantes = tipo === 'recordatorio' ? 7
+      : tipo === 'vencimiento' ? 0
+      : tipo === 'atraso_warning' ? -3
+      : -7;
+    enviarEmail([myEmail], {
+      asunto: `[TEST · ${tipo.toUpperCase()}] ${provincia} — ${base.actividad}`,
+      cuerpo: generarEmailRecordatorio({ ...base, diasRestantes, tipo })
     });
   });
 
-  Logger.log('testEnviarTodosLosTipos: 8 emails enviados a ' + myEmail);
+  Logger.log('testEnviarTodosLosTipos: 4 emails enviados a ' + myEmail);
 }
 
 // ---- GESTIÓN DE TOKENS DE ACCESO POR ACTOR ----
