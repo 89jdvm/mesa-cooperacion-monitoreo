@@ -52,7 +52,7 @@ export function renderMiTrabajo(mount, { activities, actor, today, formUrl }) {
     ${renderHero(state, actor, mine, racha, { rank, mySubRank, mySub, isST, verifyCount: verifyQueue.length })}
     ${isST ? renderVerifyCenter(verifyQueue, verifyUrl) : ''}
     ${renderMetaQ(mine, completed, atrasadas, qPct, today)}
-    ${renderUrgent(urgent, today)}
+    ${renderUrgent(urgent, today, actionLink)}
     ${renderAgenda(mine, today)}
     ${renderSubmesaStanding(mySub, mySubRank, actor)}
   `;
@@ -175,7 +175,7 @@ function renderMetaQ(mine, completed, atrasadas, pct, today) {
   `;
 }
 
-function renderUrgent(items, today) {
+function renderUrgent(items, today, actionLink) {
   if (!items.length) return '';
   return `
     <section class="panel" style="margin-bottom:16px">
@@ -193,7 +193,7 @@ function renderUrgent(items, today) {
             </div>
             <div style="text-align:right">
               <div style="font-size:11px;color:var(--muted)"><b style="color:${d<0?'var(--red)':d<=3?'var(--orange)':'var(--amber)'};font-size:12px">${d<0?`−${-d} días`:`En ${d} días`}</b></div>
-              ${formUrl ? `
+              ${actionLink ? `
                 <div style="display:flex;gap:6px;margin-top:6px">
                   <a class="btn btn-done" href="${actionLink(a.id, false)}" target="_blank" rel="noopener" style="background:var(--green);color:#fff;padding:5px 11px;border-radius:6px;font-size:11px;font-weight:600;text-decoration:none">✅ Completé</a>
                   <a class="btn btn-block" href="${actionLink(a.id, true)}" target="_blank" rel="noopener" style="background:var(--orange);color:#fff;padding:5px 11px;border-radius:6px;font-size:11px;font-weight:600;text-decoration:none">⚠ Bloqueador</a>
