@@ -1124,7 +1124,8 @@ function enviarEmail(destinatarios, opciones) {
     try {
       GmailApp.sendEmail(email, opciones.asunto, '', {
         htmlBody: opciones.cuerpo,
-        name: CONFIG.EMAIL_REMITENTE_NOMBRE
+        name: CONFIG.EMAIL_REMITENTE_NOMBRE,
+        charset: 'UTF-8'
       });
     } catch (e) {
       Logger.log('Error enviando a ' + email + ': ' + e.message);
