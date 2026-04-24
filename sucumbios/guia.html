@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guía de acceso — Mesa de Cooperación de Sucumbíos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #16a34a;
+    --green-light: #dcfce7;
+    --green-mid: #86efac;
+    --amber: #d97706;
+    --amber-light: #fef3c7;
+    --blue: #1d4ed8;
+    --blue-light: #dbeafe;
+    --text: #111827;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --bg: #f9fafb;
+    --white: #ffffff;
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    line-height: 1.65;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: var(--green);
+    color: white;
+    padding: 40px 32px 36px;
+    text-align: center;
+  }
+  .header-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    opacity: 0.8;
+    margin-bottom: 12px;
+  }
+  .header-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 10px;
+  }
+  .header-sub {
+    font-size: 15px;
+    opacity: 0.85;
+  }
+
+  /* ── CONTENT ── */
+  .page { max-width: 680px; margin: 0 auto; padding: 48px 24px 80px; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 32px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .card-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: var(--green);
+    color: white;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 50%;
+    margin-bottom: 14px;
+  }
+  .card h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 12px;
+    line-height: 1.3;
+  }
+  .card p {
+    font-size: 15px;
+    color: #374151;
+    margin-bottom: 10px;
+    line-height: 1.7;
+  }
+  .card p:last-child { margin-bottom: 0; }
+
+  /* ── HIGHLIGHT BOX ── */
+  .highlight {
+    background: var(--green-light);
+    border: 1px solid var(--green-mid);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 16px 0;
+    font-size: 15px;
+    color: #14532d;
+    line-height: 1.6;
+  }
+  .highlight strong { color: var(--green); }
+
+  .warn {
+    background: var(--amber-light);
+    border: 1px solid #fcd34d;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 14px 0;
+    font-size: 14px;
+    color: #78350f;
+    line-height: 1.6;
+  }
+
+  /* ── STEPS ── */
+  .steps { list-style: none; counter-reset: step; margin: 12px 0; }
+  .steps li {
+    counter-increment: step;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 15px;
+    color: #374151;
+  }
+  .steps li:last-child { border-bottom: none; }
+  .steps li::before {
+    content: counter(step);
+    min-width: 24px;
+    height: 24px;
+    background: var(--blue-light);
+    color: var(--blue);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* ── TABLA ROLES ── */
+  .roles-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+  .roles-table th {
+    text-align: left;
+    padding: 10px 12px;
+    background: var(--bg);
+    border-bottom: 2px solid var(--border);
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .roles-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    line-height: 1.5;
+  }
+  .roles-table td:first-child { font-weight: 500; color: var(--text); }
+  .roles-table tr:last-child td { border-bottom: none; }
+
+  /* ── FRECUENCIA ── */
+  .freq-list { list-style: none; margin: 12px 0; }
+  .freq-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    color: #374151;
+  }
+  .freq-list li:last-child { border-bottom: none; }
+  .freq-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .tag-green { background: var(--green-light); color: var(--green); }
+  .tag-amber { background: var(--amber-light); color: var(--amber); }
+  .tag-blue  { background: var(--blue-light);  color: var(--blue); }
+
+  /* ── CTA ── */
+  .cta-box {
+    background: linear-gradient(135deg, #14532d 0%, #166534 100%);
+    border-radius: var(--radius);
+    padding: 32px;
+    text-align: center;
+    margin-top: 24px;
+    color: white;
+  }
+  .cta-box p { opacity: 0.85; font-size: 14px; margin-bottom: 20px; }
+  .cta-btn {
+    display: inline-block;
+    background: white;
+    color: var(--green);
+    font-weight: 700;
+    font-size: 15px;
+    padding: 14px 32px;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: opacity 0.15s;
+  }
+  .cta-btn:hover { opacity: 0.9; }
+
+  /* ── FOOTER ── */
+  .footer {
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    padding: 32px 24px;
+    border-top: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-eyebrow">Guía de acceso · Taller 25 abril 2026</div>
+  <h1 class="header-title">Plataforma de Monitoreo<br>Mesa de Cooperación de Sucumbíos</h1>
+  <div class="header-sub">Para líderes de Submesa y Secretaría Técnica</div>
+</div>
+
+<div class="page">
+
+  <!-- ¿Qué es esto? -->
+  <div class="card">
+    <div class="card-num">1</div>
+    <h2>¿Qué es esta plataforma?</h2>
+    <p>Una herramienta web que permite a cada Submesa <strong>reportar el avance</strong> de sus actividades de la Hoja de Ruta 2026–2028, y a la Secretaría Técnica <strong>verificar y dar visibilidad pública</strong> a esos avances.</p>
+    <div class="highlight">
+      <strong>Costo: cero.</strong> Acceso: por enlace personal único que llegó a tu correo. Sin contraseñas.
+    </div>
+  </div>
+
+  <!-- Tu acceso -->
+  <div class="card">
+    <div class="card-num">2</div>
+    <h2>Tu acceso personal</h2>
+    <p>Recibiste un correo de <strong>Mesa de Cooperación — Monitoreo</strong> con el asunto:</p>
+    <div class="highlight">"Tu acceso personal — Mesa de Cooperación de Sucumbíos"</div>
+    <p>Adentro hay un botón verde <strong>"Abrir mi dashboard"</strong>. Ese es tu acceso.</p>
+    <div class="warn">
+      ⚠ Ese enlace es <strong>personal</strong>. Cualquiera con tu enlace puede reportar en tu nombre. Guárdalo en favoritos. No lo compartas por WhatsApp ni redes sociales.
+    </div>
+    <p>Si no encuentras el correo, revisa <strong>Spam</strong> y <strong>Promociones</strong>. Si aún así no aparece, la Secretaría Técnica te enviará el enlace directo durante el taller.</p>
+  </div>
+
+  <!-- Lo que verás -->
+  <div class="card">
+    <div class="card-num">3</div>
+    <h2>Lo que verás al entrar</h2>
+    <p>Tu panel <strong>"Mi trabajo"</strong> muestra solo las actividades de tu Submesa. Cada actividad tiene dos botones:</p>
+    <ol class="steps">
+      <li><strong>✅ Ya la completé</strong> — para reportar que terminaste un hito. Te pide el enlace a la evidencia: acta, foto, o documento en Drive.</li>
+      <li><strong>⚠️ Reportar obstáculo</strong> — para informar que algo te impide avanzar. Te pide describir qué está trabando la actividad.</li>
+    </ol>
+    <p>Al enviar, la Secretaría Técnica recibe una notificación automática por correo. Ella valida y publica el avance.</p>
+  </div>
+
+  <!-- Qué pasa después -->
+  <div class="card">
+    <div class="card-num">4</div>
+    <h2>¿Qué pasa después de reportar?</h2>
+    <ol class="steps">
+      <li>La Secretaría Técnica recibe email con tu reporte.</li>
+      <li>Ella revisa la evidencia y marca <strong>verificado</strong> en el sistema.</li>
+      <li>Tu actividad pasa a estado <strong>Completada</strong> en el dashboard público.</li>
+      <li>Si tu Submesa va bien, aparece en el podio <strong>"Avanzadores del mes"</strong> 🥇</li>
+    </ol>
+  </div>
+
+  <!-- Calendario de recordatorios -->
+  <div class="card">
+    <div class="card-num">5</div>
+    <h2>Calendario de recordatorios</h2>
+    <p>Solo recibes correos cuando hace falta — no es spam:</p>
+    <ul class="freq-list">
+      <li><span class="freq-tag tag-blue">7 días antes</span> Recordatorio amable del plazo que se acerca</li>
+      <li><span class="freq-tag tag-amber">Día del plazo</span> Confirmación: hoy vence esta actividad</li>
+      <li><span class="freq-tag tag-amber">3 días después</span> Alerta de atraso — aún a tiempo</li>
+      <li><span class="freq-tag tag-amber">7+ días después</span> Escalación a la Comisión de Seguimiento y Evaluación</li>
+      <li><span class="freq-tag tag-green">Cada lunes</span> Resumen semanal personal con tus actividades</li>
+      <li><span class="freq-tag tag-green">Día 1 de cada mes</span> Informe consolidado de la Mesa para todos</li>
+    </ul>
+    <p style="font-size:14px;color:var(--muted);margin-top:8px;">Si no hay nada vencido o por vencer, no recibes correos.</p>
+  </div>
+
+  <!-- Tu rol vs ST -->
+  <div class="card">
+    <div class="card-num">6</div>
+    <h2>Tu rol vs el rol de la Secretaría Técnica</h2>
+    <table class="roles-table">
+      <thead>
+        <tr>
+          <th>Tú (líder de Submesa)</th>
+          <th>Secretaría Técnica</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Reportas el avance</td><td>Verifica el reporte</td></tr>
+        <tr><td>Subes la evidencia</td><td>Da visibilidad pública</td></tr>
+        <tr><td>Informas obstáculos</td><td>Articula apoyo entre Submesas</td></tr>
+        <tr><td>Decides cuándo y qué reportar</td><td>Mantiene el dashboard al día</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-box">
+    <p>Dashboard público de la Mesa — visible para cualquier ciudadano, sin login</p>
+    <a class="cta-btn" href="https://89jdvm.github.io/mesa-cooperacion-monitoreo/sucumbios/" target="_blank">Ver dashboard público →</a>
+  </div>
+
+  <!-- Soporte -->
+  <div class="card" style="margin-top:16px;">
+    <h2>Soporte</h2>
+    <p>A partir del viernes 25 de abril, todas las consultas operativas las gestiona la <strong>Secretaría Técnica de la Mesa de Cooperación de Sucumbíos</strong> — Andrea Girón.</p>
+  </div>
+
+</div>
+
+<div class="footer">
+  Mesa de Cooperación de Sucumbíos · Hoja de Ruta 2026–2028
+</div>
+
+</body>
+</html>

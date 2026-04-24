@@ -460,7 +460,7 @@ function showModal(id) {
       <div class="field-value">${escHtml(a.ambito)}</div>
     </div>
     ${a.enlace_evidencia ? `<div class="modal-field"><div class="field-label">Evidencia adjunta</div><div class="field-value"><a href="${escHtml(a.enlace_evidencia)}" target="_blank">Ver evidencia</a></div></div>` : ''}
-    ${a.notas_bloqueador ? `<div class="modal-field"><div class="field-label">Notas / Bloqueador</div><div class="field-value">${escHtml(a.notas_bloqueador)}</div></div>` : ''}
+    ${a.notas_bloqueador ? `<div class="modal-field"><div class="field-label">Notas / Obstáculo</div><div class="field-value">${escHtml(a.notas_bloqueador)}</div></div>` : ''}
   `;
 
   document.getElementById('modal-overlay').classList.add('active');

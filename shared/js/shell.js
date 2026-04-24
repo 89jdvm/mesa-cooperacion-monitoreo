@@ -4,11 +4,12 @@
 //
 // Tabs visible to anonymous visitors: Panel, Actividades, Línea de Tiempo.
 // Mi trabajo tab only appears once an actor is identified (via ?actor=X&token=Y).
+import { actorBaseName } from './utils.js';
 
 export function renderShell({ province, provinceLabel, actor, activeTab }) {
   const root = document.getElementById('app');
   root.innerHTML = '';
-  root.appendChild(renderTop(provinceLabel, actor));
+  root.appendChild(renderTop(provinceLabel, actor, activeTab));
   root.appendChild(renderTabs(activeTab, actor));
   const main = document.createElement('main');
   main.className = 'main';
@@ -17,7 +18,9 @@ export function renderShell({ province, provinceLabel, actor, activeTab }) {
   return main;
 }
 
-function renderTop(provinceLabel, actor) {
+function renderTop(provinceLabel, actor, activeTab) {
+  // Show actor identity only in Mi trabajo — public tabs show "Vista pública"
+  const showActor = actor && activeTab === 'mi-trabajo';
   const el = document.createElement('div');
   el.className = 'frame-top';
   el.innerHTML = `
@@ -29,10 +32,10 @@ function renderTop(provinceLabel, actor) {
       </div>
     </div>
     <div class="whoami">
-      ${actor ? `
+      ${showActor ? `
         <div class="avatar">${initials(actor.name)}</div>
         <div>
-          <div class="nm" style="font-weight:600">${actor.name}</div>
+          <div class="nm" style="font-weight:600">${actorBaseName(actor.name)}</div>
           <div class="rl" style="font-size:11px;color:var(--muted)">${actor.submesa || 'Mesa'}</div>
         </div>
         <a href="#" class="change" data-action="logout" style="font-size:11px;color:var(--muted);margin-left:8px;text-decoration:none">Cerrar sesión</a>

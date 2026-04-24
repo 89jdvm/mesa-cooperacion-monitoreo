@@ -102,10 +102,10 @@ function inferSubmesa(a) {
   // Sucumbíos submesas
   if (a.provincia === 'Sucumbíos') {
     if (text.includes('gestión ambiental')) return 'S1';
-    if (text.includes('planificación')) return 'S2';
+    if (text.includes('corposucumbíos') || text.includes('corposucumbios')) return 'S2';
     if (text.includes('nacionalidades y turismo')) return 'S3';
-    if (text.includes('corposucumbíos') || text.includes('corposucumbios')) return 'S4';
-    if (text.includes('sucumbíos solidario') || text.includes('sucumbios solidario')) return 'S5';
+    if (text.includes('sucumbíos solidario') || text.includes('sucumbios solidario')) return 'S4';
+    if (text.includes('planificación') || text.includes('planificacion')) return 'S5';
   }
 
   // Explicit Sn in text

@@ -53,7 +53,7 @@ export function renderMiTrabajo(mount, { activities, actor, today, formUrl }) {
     ${isST ? renderVerifyCenter(verifyQueue, verifyUrl) : ''}
     ${renderMetaQ(mine, completed, atrasadas, qPct, today)}
     ${renderUrgent(urgent, today, actionLink)}
-    ${renderAgenda(mine, today)}
+    ${renderAgenda(mine, today, actionLink)}
     ${renderSubmesaStanding(mySub, mySubRank, actor)}
   `;
 }
@@ -159,17 +159,25 @@ function renderHero(state, actor, mine, racha, ctx) {
 }
 
 function renderMetaQ(mine, completed, atrasadas, pct, today) {
+  const qStart = startOfQuarter(today);
   const qEnd = endOfQuarter(today);
   const daysLeft = Math.max(0, daysBetween(today, qEnd));
+  const inQuarter = mine.filter(a => {
+    const fl = new Date(a.fecha_limite);
+    return fl >= qStart && fl <= qEnd;
+  });
+  const qCompleted = inQuarter.filter(a => a.estado === 'Completado').length;
+  const qPct = inQuarter.length ? Math.round((qCompleted / inQuarter.length) * 100) : 0;
+  const qLabel = quarterLabel(today);
   return `
     <div style="background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px 20px;display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:16px">
-      <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:600">Meta del trimestre</div><div style="font-size:22px;font-weight:800;color:var(--primary);margin-top:3px">${completed} de ${mine.length}</div></div>
-      <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:600">Completadas (todo)</div><div style="font-size:22px;font-weight:800;margin-top:3px">${completed}</div></div>
+      <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:600">Meta de este trimestre (${qLabel})</div><div style="font-size:22px;font-weight:800;color:var(--primary);margin-top:3px">${qCompleted} de ${inQuarter.length}</div></div>
+      <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:600">Total hoja de ruta</div><div style="font-size:22px;font-weight:800;margin-top:3px">${completed} / ${mine.length}</div></div>
       <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:600">Requieren acción</div><div style="font-size:22px;font-weight:800;color:var(--red);margin-top:3px">${atrasadas}</div></div>
       <div>
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:600">Avance Q</div>
-        <div style="background:var(--line-2);height:8px;border-radius:4px;margin-top:8px;overflow:hidden"><div style="background:linear-gradient(90deg,var(--primary-dark),var(--primary-accent));height:100%;width:${pct}%"></div></div>
-        <div style="font-size:11px;color:var(--muted);margin-top:6px">${pct}% · quedan ${daysLeft} días</div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:600">Avance ${qLabel}</div>
+        <div style="background:var(--line-2);height:8px;border-radius:4px;margin-top:8px;overflow:hidden"><div style="background:linear-gradient(90deg,var(--primary-dark),var(--primary-accent));height:100%;width:${qPct}%"></div></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px">${qPct}% · quedan ${daysLeft} días</div>
       </div>
     </div>
   `;
@@ -196,7 +204,7 @@ function renderUrgent(items, today, actionLink) {
               ${actionLink ? `
                 <div style="display:flex;gap:6px;margin-top:6px">
                   <a class="btn btn-done" href="${actionLink(a.id, false)}" target="_blank" rel="noopener" style="background:var(--green);color:#fff;padding:5px 11px;border-radius:6px;font-size:11px;font-weight:600;text-decoration:none">✅ Completé</a>
-                  <a class="btn btn-block" href="${actionLink(a.id, true)}" target="_blank" rel="noopener" style="background:var(--orange);color:#fff;padding:5px 11px;border-radius:6px;font-size:11px;font-weight:600;text-decoration:none">⚠ Bloqueador</a>
+                  <a class="btn btn-block" href="${actionLink(a.id, true)}" target="_blank" rel="noopener" style="background:var(--orange);color:#fff;padding:5px 11px;border-radius:6px;font-size:11px;font-weight:600;text-decoration:none">⚠ Obstáculo</a>
                 </div>
               ` : ''}
             </div>
@@ -207,21 +215,55 @@ function renderUrgent(items, today, actionLink) {
   `;
 }
 
-function renderAgenda(mine, today) {
-  const items = mine
-    .filter(a => a.estado !== 'Completado')
-    .map(a => ({ a, d: daysBetween(today, new Date(a.fecha_limite)) }))
-    .filter(x => x.d >= 0 && x.d <= 30)
-    .sort((x, y) => x.d - y.d);
-  if (!items.length) return '';
-  return `<section class="panel" style="margin-bottom:16px"><h4>Mi agenda — próximos 30 días</h4>
-    ${items.map(({a, d}) => `
-      <div style="display:grid;grid-template-columns:80px 1fr 80px;gap:12px;padding:9px 0;border-top:1px solid var(--line-2);font-size:12px;align-items:center">
-        <div style="color:var(--primary);font-weight:700;font-size:11px;text-transform:uppercase">${formatDate(new Date(a.fecha_limite), true)}</div>
-        <div>${a.hito_operativo}</div>
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;text-align:right;font-weight:600">EN ${d} DÍAS</div>
-      </div>`).join('')}
-  </section>`;
+function renderAgenda(mine, today, actionLink) {
+  if (!mine.length) return `<section class="panel" style="margin-bottom:16px"><h4>Mis actividades</h4><div style="font-size:13px;color:var(--muted)">No hay actividades asignadas a tu Submesa.</div></section>`;
+
+  const sorted = [...mine].sort((a, b) => new Date(a.fecha_limite) - new Date(b.fecha_limite));
+
+  const statusBadge = a => {
+    if (a.estado === 'Completado')   return `<span style="background:#dcfce7;color:#15803d;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px">✓ Completada</span>`;
+    if (a.estado === 'Atrasado')     return `<span style="background:#fee2e2;color:#b91c1c;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px">⚠ Atrasada</span>`;
+    if (a.estado === 'En progreso')  return `<span style="background:#dbeafe;color:#1d4ed8;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px">En progreso</span>`;
+    return `<span style="background:#f1f5f9;color:#64748b;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px">Por iniciar</span>`;
+  };
+
+  const rows = sorted.map(a => {
+    const d = daysBetween(today, new Date(a.fecha_limite));
+    const done = a.estado === 'Completado';
+    const plazoColor = d < 0 ? 'var(--red)' : d <= 7 ? 'var(--amber)' : 'var(--muted)';
+    const plazoLabel = d < 0 ? `Venció hace ${-d}d` : d === 0 ? 'Vence hoy' : `Vence en ${d}d`;
+
+    return `
+      <div style="border-top:1px solid var(--line-2);padding:16px 0;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:8px">
+          <div style="flex:1">
+            <div style="font-family:monospace;font-size:10px;color:var(--muted);margin-bottom:4px">${a.id}</div>
+            <div style="font-size:14px;font-weight:600;color:${done ? 'var(--muted)' : 'var(--ink)'};${done ? 'text-decoration:line-through' : ''}">${a.hito_operativo}</div>
+            ${a.que_se_hace ? `<div style="font-size:12px;color:var(--ink-3);margin-top:4px;line-height:1.5">${a.que_se_hace}</div>` : ''}
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            ${statusBadge(a)}
+            <div style="font-size:11px;color:${plazoColor};font-weight:600;margin-top:6px">${plazoLabel}</div>
+            <div style="font-size:11px;color:var(--muted)">${formatDate(new Date(a.fecha_limite), true)}</div>
+          </div>
+        </div>
+        ${a.producto_verificable ? `<div style="font-size:12px;color:var(--ink-3);background:var(--bg);padding:8px 12px;border-radius:6px;margin-bottom:8px"><b style="color:var(--ink-2)">Producto esperado:</b> ${a.producto_verificable}</div>` : ''}
+        ${!done && actionLink ? `
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <a href="${actionLink(a.id, false)}" target="_blank" rel="noopener" style="background:var(--green);color:#fff;padding:7px 14px;border-radius:6px;font-size:12px;font-weight:600;text-decoration:none">✅ Ya la completé</a>
+            <a href="${actionLink(a.id, true)}" target="_blank" rel="noopener" style="background:#fff;color:var(--amber);border:1px solid var(--amber);padding:7px 14px;border-radius:6px;font-size:12px;font-weight:600;text-decoration:none">⚠ Reportar obstáculo</a>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <section class="panel" style="margin-bottom:16px">
+      <h4>Mis actividades <span class="sub">${mine.length} en total</span></h4>
+      ${rows}
+    </section>
+  `;
 }
 
 function renderSubmesaStanding(mySub, rank, actor) {
@@ -240,4 +282,13 @@ function renderSubmesaStanding(mySub, rank, actor) {
 function endOfQuarter(d) {
   const q = Math.floor(d.getMonth() / 3);
   return new Date(d.getFullYear(), q * 3 + 3, 0);
+}
+
+function startOfQuarter(d) {
+  const q = Math.floor(d.getMonth() / 3);
+  return new Date(d.getFullYear(), q * 3, 1);
+}
+
+function quarterLabel(d) {
+  return `Q${Math.floor(d.getMonth() / 3) + 1} ${d.getFullYear()}`;
 }

@@ -79,7 +79,7 @@ function renderActions(a) {
   };
   return `<div style="margin-top:18px;display:flex;gap:8px">
     <a href="${buildUrl(false)}" target="_blank" rel="noopener" style="background:var(--green);color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">✅ Reportar completada</a>
-    <a href="${buildUrl(true)}" target="_blank" rel="noopener" style="background:var(--orange);color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">⚠ Reportar bloqueador</a>
+    <a href="${buildUrl(true)}" target="_blank" rel="noopener" style="background:var(--orange);color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">⚠ Reportar obstáculo</a>
   </div>`;
 }
 
