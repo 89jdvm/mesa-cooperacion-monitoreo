@@ -1,17 +1,35 @@
 // shared/js/panel.js — public dashboard, no personal information
 import { formatDate, daysBetween } from './utils.js';
-import { computeSubmesaRace } from './gamification.js';
+import { computeSubmesaRace, computePodio } from './gamification.js';
+
+// Per-province submesa label tables
+const SUBMESA_LABELS_BY_PROVINCE = {
+  'Sucumbíos': {
+    S1: 'S1 · Gestión Ambiental',
+    S2: 'S2 · Agroproductivo',
+    S3: 'S3 · Patrimonio Cultural',
+    S4: 'S4 · Social',
+    S5: 'S5 · Gobernanza',
+  },
+  'Orellana': {
+    S1: 'S1 · Gestión Ambiental',
+    S2: 'S2 · Nacionalidades',
+    S3: 'S3 · Fomento Productivo',
+  },
+};
 
 export function renderPanel(mount, { activities, today, provinceLabel }) {
   const totals = computeTotals(activities);
   const race   = computeSubmesaRace(activities);
   const proximos = upcomingBySubmesa(activities, today);
+  const podio  = computePodio(activities, today);
 
   mount.innerHTML = `
-    ${renderHero(totals, today, provinceLabel)}
-    ${renderSubmesaCards(race, activities, today)}
-    ${renderProximos(proximos)}
-    ${renderFooter()}
+    ${renderHero(totals, today, provinceLabel, SUBMESA_LABELS_BY_PROVINCE[provinceLabel] || {})}
+    ${renderSubmesaCards(race, activities, today, provinceLabel)}
+    ${renderPodio(podio)}
+    ${renderProximos(proximos, provinceLabel)}
+    ${renderFooter(provinceLabel)}
   `;
 }
 
@@ -46,7 +64,7 @@ function upcomingBySubmesa(acts, today) {
 
 // ── render ────────────────────────────────────────────────────────────────────
 
-function renderHero(t, today, provinceLabel) {
+function renderHero(t, today, provinceLabel, labels) {
   const barH = i => Math.max(8, Math.round(10 + i * (t.pct / 12)));
   const bars = Array.from({length: 8}, (_, i) =>
     `<div style="flex:1;background:rgba(255,255,255,0.35);border-radius:2px;height:${barH(i)}%"></div>`
@@ -64,33 +82,27 @@ function renderHero(t, today, provinceLabel) {
         <div class="mini"><div class="l">Completadas</div><div class="n">${t.done}</div></div>
         <div class="mini"><div class="l">En progreso</div><div class="n">${t.progress}</div></div>
         <div class="mini"><div class="l">Por iniciar</div><div class="n">${t.pending}</div></div>
-        <div class="mini"><div class="l">Submesas</div><div class="n">5</div></div>
+        <div class="mini"><div class="l">Submesas</div><div class="n">${Object.keys(labels).length || 5}</div></div>
       </div>
     </section>
   `;
 }
 
-function renderSubmesaCards(race, activities, today) {
-  const SUBMESA_LABELS = {
-    S1: 'S1 · Ambiental',
-    S2: 'S2 · Agroproductivo',
-    S3: 'S3 · Patrimonio',
-    S4: 'S4 · Social',
-    S5: 'S5 · Gobernanza',
-  };
+function renderSubmesaCards(race, activities, today, provinceLabel) {
+  const labels = SUBMESA_LABELS_BY_PROVINCE[provinceLabel] || SUBMESA_LABELS_BY_PROVINCE['Sucumbíos'];
+  const submesaKeys = Object.keys(labels);
 
   const fillColor = pct => pct >= 60 ? 'var(--green)' : pct >= 30 ? 'var(--amber)' : 'var(--orange)';
 
   const submesaActs = submesa => activities.filter(a => a.submesa === submesa);
 
-  // Only S1–S5
-  const rows = ['S1','S2','S3','S4','S5'].map(key => {
+  const rows = submesaKeys.map(key => {
     const r   = race.find(x => x.submesa === key) || { pct: 0, done: 0, total: 0, late: 0 };
     const acts = submesaActs(key);
     const next = acts
       .filter(a => a.estado !== 'Completado')
       .sort((a, b) => new Date(a.fecha_limite) - new Date(b.fecha_limite))[0];
-    const label = SUBMESA_LABELS[key] || key;
+    const label = labels[key] || key;
 
     const nextHtml = next
       ? `<div style="font-size:12px;color:var(--muted);margin-top:8px;line-height:1.4">
@@ -127,14 +139,14 @@ function renderSubmesaCards(race, activities, today) {
   `;
 }
 
-function renderProximos(items) {
+function renderProximos(items, provinceLabel) {
   if (!items.length) return '';
-  const SUBMESA_LABELS = { S1:'S1 Ambiental', S2:'S2 Agroproductivo', S3:'S3 Patrimonio', S4:'S4 Social', S5:'S5 Gobernanza' };
+  const labels = SUBMESA_LABELS_BY_PROVINCE[provinceLabel] || SUBMESA_LABELS_BY_PROVINCE['Sucumbíos'];
   const rows = items.map(([submesa, {a, d}]) => {
     const late = d < 0;
     return `
       <div style="display:grid;grid-template-columns:100px 1fr 80px;gap:12px;padding:10px 0;border-top:1px solid var(--line-2);align-items:center">
-        <div style="font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase">${SUBMESA_LABELS[submesa] || submesa}</div>
+        <div style="font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase">${labels[submesa] || submesa}</div>
         <div style="font-size:13px;color:var(--ink)">${a.hito_operativo}</div>
         <div style="text-align:right;font-size:11px;font-weight:700;color:${late ? 'var(--red)' : 'var(--muted)'}">
           ${late ? `−${-d}d` : `en ${d}d`}<br>
@@ -152,11 +164,29 @@ function renderProximos(items) {
   `;
 }
 
-function renderFooter() {
+function renderFooter(provinceLabel) {
   return `
     <div style="margin-top:20px;padding-top:14px;border-top:1px solid var(--line);font-size:11px;color:var(--muted);text-align:center">
-      Datos actualizados desde el Google Sheet de seguimiento · Mesa de Cooperación de Sucumbíos
+      Datos actualizados desde el Google Sheet de seguimiento · Mesa de Cooperación de ${provinceLabel}
     </div>
+  `;
+}
+
+function renderPodio(podio) {
+  if (!podio.length) return '';
+  const medals = ['🥇', '🥈', '🥉'];
+  const rows = podio.map((p, i) => `
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line-2)">
+      <div style="font-size:20px;width:28px;text-align:center">${medals[i] || ''}</div>
+      <div style="flex:1;font-size:13px;font-weight:600;color:var(--ink)">${p.actor}</div>
+      <div style="font-size:12px;font-weight:700;color:var(--green)">${p.count} completada${p.count > 1 ? 's' : ''}</div>
+    </div>
+  `).join('');
+  return `
+    <section class="panel" style="margin-top:8px;margin-bottom:12px">
+      <h4>Avanzadores del mes <span class="sub">Completadas a tiempo en ${new Date().toLocaleString('es', {month:'long'})}</span></h4>
+      ${rows}
+    </section>
   `;
 }
 

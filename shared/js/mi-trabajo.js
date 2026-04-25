@@ -156,7 +156,7 @@ function renderHero(state, actor, mine, racha, ctx) {
       label: `Hola, ${greetingName} 👋`,
       title: 'Vas bien. Una completada más y <b>entras al podio</b>.',
       sub: `Tienes ${mine.filter(a => a.estado !== 'Completado').length} actividades activas. Tu submesa ${ctx.mySub ? `ocupa el ${ctx.mySubRank}° lugar` : 'está en la carrera'}.`,
-      social: 'La carrera del podio es visible en el Panel. Tu nombre no aparece todavía — está a un paso de aparecer.',
+      social: 'Una actividad completada a tiempo este mes te lleva al podio "Avanzadores del mes" en el Panel público.',
       socialIcon: '🎯'
     },
     C: {
