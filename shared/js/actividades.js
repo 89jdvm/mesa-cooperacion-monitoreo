@@ -4,6 +4,17 @@ import { formatDate, daysBetween } from './utils.js';
 export function renderActividades(mount, { activities, today }) {
   const state = { filter: 'todas', search: '' };
 
+  // Single delegated listener on mount — avoids re-attaching on every paint().
+  mount.addEventListener('click', e => {
+    const pill = e.target.closest('.pill, [data-filter]');
+    if (pill) { e.preventDefault(); state.filter = pill.dataset.filter; paint(); return; }
+    const row = e.target.closest('.tbl .row');
+    if (row) window.dispatchEvent(new CustomEvent('open-activity', { detail: { id: row.dataset.id } }));
+  });
+  mount.addEventListener('input', e => {
+    if (e.target.id === 'act-search') { state.search = e.target.value; paint(); }
+  });
+
   const filter = () => {
     const txt = state.search.toLowerCase();
     return activities.filter(a => {
@@ -53,17 +64,6 @@ export function renderActividades(mount, { activities, today }) {
       <div style="font-size:11px;color:var(--muted);text-align:right;margin-top:10px">Mostrando ${filter().length} de ${activities.length}</div>
     `;
 
-    mount.querySelectorAll('[data-filter]').forEach(el => el.addEventListener('click', e => {
-      e.preventDefault(); state.filter = el.dataset.filter; paint();
-    }));
-    mount.querySelectorAll('.pill').forEach(el => el.addEventListener('click', e => {
-      state.filter = el.dataset.filter; paint();
-    }));
-    const searchInput = mount.querySelector('#act-search');
-    if (searchInput) searchInput.addEventListener('input', e => { state.search = e.target.value; paint(); });
-    mount.querySelectorAll('.tbl .row').forEach(el => el.addEventListener('click', () => {
-      window.dispatchEvent(new CustomEvent('open-activity', { detail: { id: el.dataset.id } }));
-    }));
   };
 
   paint();

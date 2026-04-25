@@ -1,5 +1,5 @@
 // shared/js/panel.js — public dashboard, no personal information
-import { formatDate, daysBetween } from './utils.js';
+import { formatDate, daysBetween, escapeHtml } from './utils.js';
 import { computeSubmesaRace, computePodio } from './gamification.js';
 
 // Per-province submesa label tables
@@ -107,7 +107,7 @@ function renderSubmesaCards(race, activities, today, provinceLabel) {
     const nextHtml = next
       ? `<div style="font-size:12px;color:var(--muted);margin-top:8px;line-height:1.4">
            <span style="font-weight:600;color:var(--ink-2)">Próximo hito:</span>
-           ${next.hito_operativo}
+           ${escapeHtml(next.hito_operativo)}
            <span style="color:var(--muted)"> · ${formatDate(new Date(next.fecha_limite), true)}</span>
          </div>`
       : `<div style="font-size:12px;color:var(--green);margin-top:8px">✓ Sin pendientes próximos</div>`;
@@ -147,7 +147,7 @@ function renderProximos(items, provinceLabel) {
     return `
       <div style="display:grid;grid-template-columns:100px 1fr 80px;gap:12px;padding:10px 0;border-top:1px solid var(--line-2);align-items:center">
         <div style="font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase">${labels[submesa] || submesa}</div>
-        <div style="font-size:13px;color:var(--ink)">${a.hito_operativo}</div>
+        <div style="font-size:13px;color:var(--ink)">${escapeHtml(a.hito_operativo)}</div>
         <div style="text-align:right;font-size:11px;font-weight:700;color:${late ? 'var(--red)' : 'var(--muted)'}">
           ${late ? `−${-d}d` : `en ${d}d`}<br>
           <span style="font-weight:400">${formatDate(new Date(a.fecha_limite), true)}</span>
@@ -178,7 +178,7 @@ function renderPodio(podio) {
   const rows = podio.map((p, i) => `
     <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line-2)">
       <div style="font-size:20px;width:28px;text-align:center">${medals[i] || ''}</div>
-      <div style="flex:1;font-size:13px;font-weight:600;color:var(--ink)">${p.actor}</div>
+      <div style="flex:1;font-size:13px;font-weight:600;color:var(--ink)">${p.displayName || p.actor}</div>
       <div style="font-size:12px;font-weight:700;color:var(--green)">${p.count} completada${p.count > 1 ? 's' : ''}</div>
     </div>
   `).join('');

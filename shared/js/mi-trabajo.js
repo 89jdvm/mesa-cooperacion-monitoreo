@@ -1,5 +1,5 @@
 // shared/js/mi-trabajo.js
-import { formatDate, daysBetween, actorBaseName, actorPersonName } from './utils.js';
+import { formatDate, daysBetween, actorBaseName, actorPersonName, escapeHtml } from './utils.js';
 import { topNeedsAttention } from './priority.js';
 import { computePodio, computeRacha, computeSubmesaRace } from './gamification.js';
 import { determineState } from './mi-trabajo-state.js';
@@ -31,7 +31,8 @@ export function renderMiTrabajo(mount, { activities, actor, today, formUrl }) {
   };
   const podio = computePodio(activities, today);
   const rank = (() => {
-    const i = podio.findIndex(p => p.actor.includes(baseName));
+    // podio.actor is now the institutional baseName key — exact match
+    const i = podio.findIndex(p => p.actor === baseName);
     return i === -1 ? null : i + 1;
   })();
   const state = determineState(mine, today, { rankInPodio: rank });
@@ -286,7 +287,7 @@ function renderAgenda(mine, today, actionLink) {
           </div>
         </div>
         ${a.producto_verificable ? `<div style="font-size:12px;color:var(--ink-3);background:var(--bg);padding:8px 12px;border-radius:6px;margin-bottom:8px"><b style="color:var(--ink-2)">Producto esperado:</b> ${a.producto_verificable}</div>` : ''}
-        ${a.estado === 'Rechazado' && a.notas_bloqueador ? `<div style="font-size:12px;background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:8px 12px;margin-bottom:8px;color:#991b1b"><b>⛔ Devuelto por ST:</b> ${a.notas_bloqueador.replace(/^Devuelto por ST:\s*/i, '')}</div>` : ''}
+        ${a.estado === 'Rechazado' && a.notas_bloqueador ? `<div style="font-size:12px;background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:8px 12px;margin-bottom:8px;color:#991b1b"><b>⛔ Devuelto por ST:</b> ${escapeHtml(a.notas_bloqueador.replace(/^Devuelto por ST:\s*/i, ''))}</div>` : ''}
         ${a.estado === 'Reportada — pendiente verificación ST' ? `<div style="font-size:12px;color:#92400e;background:#fef3c7;padding:8px 12px;border-radius:6px;margin-top:4px">⏳ Enviada a la ST para verificación. Recibirás un correo con el resultado.</div>` : ''}
         ${!done && a.estado !== 'Reportada — pendiente verificación ST' && actionLink ? `
           <div style="display:flex;gap:8px;margin-top:8px">

@@ -1,5 +1,5 @@
 // shared/js/activity-modal.js
-import { formatDate, actorBaseName } from './utils.js';
+import { formatDate, actorBaseName, escapeHtml } from './utils.js';
 
 let activities = [];
 let actor = null;
@@ -34,21 +34,21 @@ async function open(id) {
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:14px">
       <div>
         <div class="mono" style="font-size:10px;color:var(--muted)">${a.id}</div>
-        <h3 style="font-size:20px;margin-top:4px;letter-spacing:-0.01em">${a.hito_operativo}</h3>
+        <h3 style="font-size:20px;margin-top:4px;letter-spacing:-0.01em">${escapeHtml(a.hito_operativo)}</h3>
       </div>
       <button data-close style="background:none;border:0;font-size:24px;color:var(--muted);cursor:pointer">×</button>
     </div>
     ${a.estado === 'Rechazado' ? `
     <div style="margin-bottom:14px;padding:12px 14px;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:8px;font-size:13px;color:#991b1b">
-      <b>⛔ ST rechazó este reporte.</b>${a.notas_bloqueador ? `<br><span style="color:#7f1d1d">${a.notas_bloqueador}</span>` : ''}
+      <b>⛔ ST rechazó este reporte.</b>${a.notas_bloqueador ? `<br><span style="color:#7f1d1d">${escapeHtml(a.notas_bloqueador)}</span>` : ''}
       <br><span style="font-size:12px;color:#b91c1c">Corrige la evidencia y vuelve a reportar.</span>
     </div>` : ''}
-    <div style="font-size:13px;line-height:1.6;color:var(--ink-3)">${a.que_se_hace || ''}</div>
+    <div style="font-size:13px;line-height:1.6;color:var(--ink-3)">${escapeHtml(a.que_se_hace || '')}</div>
     <div style="margin-top:16px;padding:14px;background:var(--bg);border-radius:8px;font-size:12px;line-height:1.7">
-      <div><b>Producto:</b> ${a.producto_verificable || '—'}</div>
-      <div><b>Responsable:</b> ${a.lidera_apoya}</div>
+      <div><b>Producto:</b> ${escapeHtml(a.producto_verificable || '—')}</div>
+      <div><b>Responsable:</b> ${escapeHtml(a.lidera_apoya || '—')}</div>
       <div><b>Plazo:</b> ${formatDate(new Date(a.fecha_limite))}</div>
-      <div><b>Submesa:</b> ${a.submesa || '—'} · <b>Tipo:</b> ${a.tipo || '—'}</div>
+      <div><b>Submesa:</b> ${escapeHtml(a.submesa || '—')} · <b>Tipo:</b> ${escapeHtml(a.tipo || '—')}</div>
     </div>
     <div style="margin-top:18px">
       <h4 style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink);margin-bottom:10px">Historial de notificaciones</h4>
@@ -83,7 +83,7 @@ function renderActions(a) {
   };
   const evidenciaHtml = a.evidencia_minima ? `
     <div style="margin-top:18px;padding:12px 14px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:8px;font-size:12px;color:#166534">
-      <b>📎 Evidencia requerida antes de reportar:</b><br>${a.evidencia_minima}
+      <b>📎 Evidencia requerida antes de reportar:</b><br>${escapeHtml(a.evidencia_minima)}
     </div>` : '';
   return `${evidenciaHtml}
   <div style="margin-top:10px;display:flex;gap:8px">

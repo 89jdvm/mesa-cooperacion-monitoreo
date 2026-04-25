@@ -1,4 +1,4 @@
-import { daysBetween } from './utils.js';
+import { daysBetween, actorBaseName, actorPersonName } from './utils.js';
 
 const sameMonth = (a, b) =>
   a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
@@ -9,14 +9,19 @@ const onTime = a =>
   new Date(a.fecha_reporte) <= new Date(a.fecha_limite);
 
 export function computePodio(activities, today) {
+  // Key by institutional base name so "Dir. X — Person A" and "Dir. X — Person B"
+  // aggregate together. Display the person name when available for human-readable podio.
   const counts = new Map();
+  const displayNames = new Map();
   for (const a of activities) {
     if (!onTime(a)) continue;
     if (!sameMonth(new Date(a.fecha_reporte), today)) continue;
-    counts.set(a.lidera_apoya, (counts.get(a.lidera_apoya) || 0) + 1);
+    const key = actorBaseName(a.lidera_apoya);
+    counts.set(key, (counts.get(key) || 0) + 1);
+    if (!displayNames.has(key)) displayNames.set(key, actorPersonName(a.lidera_apoya));
   }
   return [...counts.entries()]
-    .map(([actor, count]) => ({ actor, count }))
+    .map(([key, count]) => ({ actor: key, displayName: displayNames.get(key) || key, count }))
     .sort((x, y) => y.count - x.count || x.actor.localeCompare(y.actor))
     .slice(0, 3);
 }
@@ -59,7 +64,8 @@ export function computeRacha(actor, activities, today) {
   // Count consecutive months ending at "today's month", going backwards, where:
   //   - at least 1 on-time completion by `actor`
   //   - no 'Atrasado' activity of `actor` with fecha_limite in that month
-  const mine = activities.filter(a => a.lidera_apoya === actor);
+  // `actor` is an institutional baseName — match against baseName of lidera_apoya.
+  const mine = activities.filter(a => actorBaseName(a.lidera_apoya || '') === actor);
   let cursor = new Date(today.getFullYear(), today.getMonth(), 1);
   let streak = 0;
   while (streak < 48) { // safety cap

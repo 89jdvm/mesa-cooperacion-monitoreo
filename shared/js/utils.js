@@ -32,8 +32,13 @@ const MESES_CORTOS = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct
 
 export function formatDate(d, short = false) {
   const x = new Date(d);
+  if (isNaN(x)) return '—';
   const meses = short ? MESES_CORTOS : MESES;
   return short ? `${x.getDate()} ${meses[x.getMonth()]}` : `${x.getDate()} de ${meses[x.getMonth()]} de ${x.getFullYear()}`;
+}
+
+export function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
 export async function fetchJSON(url) {
