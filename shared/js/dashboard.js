@@ -18,7 +18,7 @@ export async function initDashboard({ dataUrl, actorsUrl, logUrl, formUrl, provi
     fetchJSON(dataUrl),
     loadActors(actorsUrl, province)
   ]);
-  activities.forEach(a => { if (!a.submesa) a.submesa = inferSubmesa(a); });
+  activities.forEach(a => { if (!a.submesa || a.submesa === 'Mesa') a.submesa = inferSubmesa(a); });
 
   let actor = resolveActorFromBrowser(actors);
 
