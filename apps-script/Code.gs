@@ -393,7 +393,7 @@ function generarEmailRecordatorio(params) {
             ✅ Ya la completé
           </a>
           <a href="${formUrl}&bloqueador=true" style="display:inline-block;background:#ea580c;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px;">
-            ⚠️ Tengo un bloqueador
+            ⚠️ Reportar situación
           </a>
         </div>
 
@@ -578,6 +578,31 @@ function doGet(e) {
     return doGetVerify({ id, actorSlug, token, action });
   }
 
+  // Look up activity metadata to show evidencia_minima on the form
+  let hitoOperativo = '';
+  let evidenciaMinima = '';
+  try {
+    const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+    const hoja = ss.getSheetByName('Sucumbíos');
+    if (hoja) {
+      const datos = hoja.getDataRange().getValues();
+      const headers = datos[0];
+      const colIndices = getColumnIndices(headers);
+      for (let i = 1; i < datos.length; i++) {
+        if (datos[i][colIndices.id] === id) {
+          hitoOperativo = datos[i][colIndices.hito_operativo] || '';
+          evidenciaMinima = datos[i][colIndices.evidencia_minima] || '';
+          break;
+        }
+      }
+    }
+  } catch (err) { /* non-fatal: form still works without it */ }
+
+  const evidenciaBanner = (!bloqueador && evidenciaMinima) ? `
+    <div style="margin-bottom:1.25rem;padding:12px 14px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:8px;font-size:0.85rem;color:#166534">
+      <strong>📎 Evidencia requerida:</strong><br>${evidenciaMinima}
+    </div>` : '';
+
   const html = HtmlService.createHtmlOutput(`
     <!DOCTYPE html>
     <html>
@@ -602,8 +627,10 @@ function doGet(e) {
     </head>
     <body>
       <div class="card" id="form-card">
-        <h2>${bloqueador ? '⚠️ Reportar bloqueador' : '✅ Confirmar actividad completada'}</h2>
+        <h2>${bloqueador ? '⚠️ Reportar situación' : '✅ Confirmar actividad completada'}</h2>
+        ${hitoOperativo ? `<p style="font-weight:600;color:#111827;font-size:0.95rem;margin-bottom:0.25rem">${hitoOperativo}</p>` : ''}
         <p>ID de actividad: <strong>${id}</strong></p>
+        ${evidenciaBanner}
 
         <form onsubmit="submitForm(event)">
           <input type="hidden" id="actId" value="${id}">
@@ -612,8 +639,8 @@ function doGet(e) {
           <input type="hidden" id="actorToken" value="${token}">
 
           ${bloqueador ? `
-            <label>Describe el bloqueador:</label>
-            <textarea id="notas" placeholder="¿Qué está impidiendo completar esta actividad?" required></textarea>
+            <label>Describe la situación:</label>
+            <textarea id="notas" placeholder="¿Qué está impidiendo avanzar con esta actividad?" required></textarea>
           ` : `
             <label>Enlace a evidencia (Google Drive, repositorio, etc.):</label>
             <input type="url" id="evidencia" placeholder="https://drive.google.com/..." />
@@ -622,7 +649,7 @@ function doGet(e) {
             <textarea id="notas" placeholder="Comentarios sobre la ejecución..."></textarea>
           `}
 
-          <button type="submit" class="${bloqueador ? 'bloqueador' : ''}">${bloqueador ? 'Reportar bloqueador' : 'Confirmar completada'}</button>
+          <button type="submit" class="${bloqueador ? 'bloqueador' : ''}">${bloqueador ? 'Reportar situación' : 'Confirmar completada'}</button>
         </form>
       </div>
 
@@ -702,7 +729,7 @@ function procesarRespuesta(data) {
       // distinto en CSV), buscar por rol como fallback.
       const stRecipients = stActores.length > 0 ? stActores : obtenerActoresST(ss, provincia);
       stRecipients.forEach(st => {
-        const tipo = data.bloqueador ? 'bloqueador' : 'completada';
+        const tipo = data.bloqueador ? 'situación reportada' : 'completada';
         const verifyUrl = getFormUrl(data.id, st.slug, st.token) + '&action=verify';
         const rejectUrl = getFormUrl(data.id, st.slug, st.token) + '&action=reject';
         enviarEmail([st.email], {
@@ -720,7 +747,7 @@ function procesarRespuesta(data) {
               <a href="${verifyUrl}" style="background:#16a34a;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">✓ Verificar</a>
               <a href="${rejectUrl}" style="background:#fff;color:#b45309;border:1px solid #d97706;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">✗ Pedir más info</a>
             </div>
-            <p style="font-size:11px;color:#94a3b8;margin-top:14px">Verificar marca la actividad como completada y la publica en el dashboard. Pedir más info la devuelve al reportante.</p>
+            <p style="font-size:11px;color:#94a3b8;margin-top:14px">Verificar marca la actividad como completada y la publica en el dashboard. Pedir más info la devuelve al responsable.</p>
             ` : ''}
           </div>`
         });
@@ -945,9 +972,9 @@ function procesarRechazo(data) {
     const actividad = datos[i][colIndices.hito_operativo];
     const lideraApoya = datos[i][colIndices.lidera_apoya];
 
-    // Revert: estado vuelve a "No iniciado" para que aparezca como pendiente
-    // de re-reporte en Mi trabajo del actor.
-    hoja.getRange(i + 1, colIndices.estado + 1).setValue('No iniciado');
+    // Revert: estado pasa a "Rechazado" para que el modal lo muestre con
+    // banner de rechazo, y el actor pueda re-reportar desde Mi trabajo.
+    hoja.getRange(i + 1, colIndices.estado + 1).setValue('Rechazado');
     hoja.getRange(i + 1, colIndices.fecha_reporte + 1).setValue('');
     hoja.getRange(i + 1, colIndices.notas_bloqueador + 1).setValue('Devuelto por ST: ' + data.motivo);
 
@@ -1361,7 +1388,7 @@ function enviarEnlacesMagicos() {
         <div style="font-family:Inter,sans-serif;max-width:520px;margin:auto;padding:24px;border:1px solid #e2e8f0;border-radius:12px">
           <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;font-weight:700">Mesa de Cooperación de ${provincia}</div>
           <h2 style="font-size:20px;margin-top:8px;color:#0f172a">Hola, ${nombre}</h2>
-          <p style="font-size:14px;color:#334155;line-height:1.55;margin-top:12px">Este es tu enlace personal al dashboard de seguimiento. Úsalo para ver tu panel <strong>Mi trabajo</strong>, reportar actividades completadas y gestionar bloqueadores.</p>
+          <p style="font-size:14px;color:#334155;line-height:1.55;margin-top:12px">Este es tu enlace personal al dashboard de seguimiento. Úsalo para ver tu panel <strong>Mi trabajo</strong>, reportar actividades completadas y gestionar situaciones imprevistas.</p>
           <p style="font-size:12px;color:#64748b;margin-top:8px;line-height:1.55"><strong>Guárdalo:</strong> cualquiera con este enlace puede reportar en tu nombre. No lo compartas.</p>
           <div style="text-align:center;margin:24px 0">
             <a href="${url}" style="display:inline-block;background:#1a6b3c;color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">Abrir mi dashboard</a>

@@ -5,10 +5,21 @@ import { computePodio, computeRacha, computeSubmesaRace } from './gamification.j
 import { determineState } from './mi-trabajo-state.js';
 
 export function renderMiTrabajo(mount, { activities, actor, today, formUrl }) {
-  // Multi-person-per-institution support: strip " — <person>" suffix so
-  // we match against the institutional label present in `lidera_apoya`.
   const baseName = actorBaseName(actor.name);
-  const mine = activities.filter(a => (a.lidera_apoya || '').includes(baseName));
+  const isST = actor.rol === 'ST' || (actor.rol || '').startsWith('ST');
+
+  // ST manages the whole Mesa, so "mine" = activities where ST is the primary
+  // (sole or first-listed) responsible party, not every activity that mentions ST.
+  // This prevents ST from seeing 66 "personal" tasks that belong to Submesas.
+  const mine = isST
+    ? activities.filter(a => {
+        const la = (a.lidera_apoya || '').trim();
+        // ST is primary if the field starts with "Secretaría Técnica" or ST is
+        // the only institution listed (no comma/slash separation with others).
+        return la.startsWith(baseName) && !la.match(/^Secretaría Técnica[^,]*,/);
+      })
+    : activities.filter(a => (a.lidera_apoya || '').includes(baseName));
+
   const actionLink = (id, blocker) => {
     if (!formUrl) return '#';
     const u = new URL(formUrl);
@@ -26,18 +37,17 @@ export function renderMiTrabajo(mount, { activities, actor, today, formUrl }) {
   const state = determineState(mine, today, { rankInPodio: rank });
   const racha = computeRacha(baseName, activities, today);
   const race = computeSubmesaRace(activities);
-  const mySub = race.find(r => r.submesa === actor.submesa);
+  // ST has rol='ST' not a submesa key — skip the submesa race card for ST.
+  const mySub = isST ? null : race.find(r => r.submesa === actor.submesa);
   const mySubRank = mySub ? race.indexOf(mySub) + 1 : null;
   const urgent = topNeedsAttention(mine, today, 3);
   const qPct = mine.length ? Math.round((mine.filter(a => a.estado === 'Completado').length / mine.length) * 100) : 0;
   const completed = mine.filter(a => a.estado === 'Completado').length;
-  const atrasadas = mine.filter(a => a.estado === 'Atrasado').length;
+  const atrasadas = mine.filter(a => a.estado === 'Atrasado' || a.estado === 'Rechazado').length;
 
-  const isST = actor.rol === 'ST' || (actor.rol || '').startsWith('ST');
   const verifyQueue = isST ? activities.filter(a => a.estado === 'Reportada — pendiente verificación ST') : [];
 
-  // Build verify/reject URLs that hit the Apps Script Web App with the ST's
-  // own (slug, token), so server-side verificarToken passes.
+  // Build verify/reject URLs using the ST's own (slug, token).
   const verifyUrl = (id, action) => {
     if (!formUrl) return '#';
     const u = new URL(formUrl);
@@ -54,7 +64,7 @@ export function renderMiTrabajo(mount, { activities, actor, today, formUrl }) {
     ${renderMetaQ(mine, completed, atrasadas, qPct, today)}
     ${renderUrgent(urgent, today, actionLink)}
     ${renderAgenda(mine, today, actionLink)}
-    ${renderSubmesaStanding(mySub, mySubRank, actor)}
+    ${!isST ? renderSubmesaStanding(mySub, mySubRank, actor) : ''}
   `;
 }
 
@@ -106,6 +116,32 @@ function daysSince(dateStr) {
 
 function renderHero(state, actor, mine, racha, ctx) {
   const greetingName = actorPersonName(actor.name).split(' ')[0];
+
+  // ST gets a Mesa-health hero instead of the personal podio/racha framing.
+  if (ctx.isST) {
+    const verifyCount = ctx.verifyCount || 0;
+    const bg = verifyCount > 0
+      ? 'linear-gradient(135deg,#1e3a8a,#1e40af 60%,#3b82f6)'
+      : 'linear-gradient(135deg,var(--primary-dark),var(--primary) 60%,var(--primary-accent))';
+    return `
+      <section style="background:${bg};color:#fff;border-radius:var(--r-xl);padding:24px 28px;display:grid;grid-template-columns:1.4fr 1fr;gap:24px;align-items:center;margin-bottom:16px;overflow:hidden">
+        <div>
+          <div style="font-size:10px;opacity:0.75;text-transform:uppercase;letter-spacing:0.08em">Hola, ${greetingName} 🛡️</div>
+          <div style="font-size:21px;font-weight:700;margin-top:5px;line-height:1.3">${verifyCount > 0 ? `${verifyCount} actividad${verifyCount > 1 ? 'es' : ''} esperan tu verificación` : 'Todo verificado — no hay cola pendiente'}</div>
+          <div style="font-size:13px;opacity:0.88;margin-top:7px;line-height:1.5">Tus actividades propias de gestión: ${mine.filter(a => a.estado === 'Completado').length} completadas de ${mine.length}.</div>
+          <div style="background:rgba(255,255,255,0.13);border:1px solid rgba(255,255,255,0.22);padding:11px 14px;border-radius:8px;font-size:12px;margin-top:12px">
+            🔒 El dashboard público solo muestra actividades que tú has verificado. Lo que no verificas no aparece como completado.
+          </div>
+        </div>
+        <div style="background:rgba(255,255,255,0.13);border:1px solid rgba(255,255,255,0.2);border-radius:14px;padding:18px 20px">
+          <div style="font-size:10px;opacity:0.85;text-transform:uppercase;letter-spacing:0.08em;font-weight:600">⏳ Cola de verificación</div>
+          <div style="font-size:36px;font-weight:800;line-height:1;margin-top:6px">${verifyCount}</div>
+          <div style="font-size:11px;opacity:0.85;margin-top:4px">${verifyCount === 0 ? 'sin pendientes' : `ítem${verifyCount > 1 ? 's' : ''} para revisar`}</div>
+        </div>
+      </section>
+    `;
+  }
+
   const configs = {
     A: {
       bg: 'linear-gradient(135deg,#78350f 0%,#b45309 40%,#d97706 100%)',
@@ -201,10 +237,10 @@ function renderUrgent(items, today, actionLink) {
             </div>
             <div style="text-align:right">
               <div style="font-size:11px;color:var(--muted)"><b style="color:${d<0?'var(--red)':d<=3?'var(--orange)':'var(--amber)'};font-size:12px">${d<0?`−${-d} días`:`En ${d} días`}</b></div>
-              ${actionLink ? `
+              ${actionLink && a.estado !== 'Reportada — pendiente verificación ST' ? `
                 <div style="display:flex;gap:6px;margin-top:6px">
                   <a class="btn btn-done" href="${actionLink(a.id, false)}" target="_blank" rel="noopener" style="background:var(--green);color:#fff;padding:5px 11px;border-radius:6px;font-size:11px;font-weight:600;text-decoration:none">✅ Completé</a>
-                  <a class="btn btn-block" href="${actionLink(a.id, true)}" target="_blank" rel="noopener" style="background:var(--orange);color:#fff;padding:5px 11px;border-radius:6px;font-size:11px;font-weight:600;text-decoration:none">⚠ Obstáculo</a>
+                  <a class="btn btn-block" href="${actionLink(a.id, true)}" target="_blank" rel="noopener" style="background:var(--orange);color:#fff;padding:5px 11px;border-radius:6px;font-size:11px;font-weight:600;text-decoration:none">⚠ Situación</a>
                 </div>
               ` : ''}
             </div>
@@ -221,9 +257,11 @@ function renderAgenda(mine, today, actionLink) {
   const sorted = [...mine].sort((a, b) => new Date(a.fecha_limite) - new Date(b.fecha_limite));
 
   const statusBadge = a => {
-    if (a.estado === 'Completado')   return `<span style="background:#dcfce7;color:#15803d;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px">✓ Completada</span>`;
-    if (a.estado === 'Atrasado')     return `<span style="background:#fee2e2;color:#b91c1c;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px">⚠ Atrasada</span>`;
-    if (a.estado === 'En progreso')  return `<span style="background:#dbeafe;color:#1d4ed8;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px">En progreso</span>`;
+    if (a.estado === 'Completado')    return `<span style="background:#dcfce7;color:#15803d;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px">✓ Completada</span>`;
+    if (a.estado === 'Atrasado')      return `<span style="background:#fee2e2;color:#b91c1c;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px">⚠ Atrasada</span>`;
+    if (a.estado === 'En progreso')   return `<span style="background:#dbeafe;color:#1d4ed8;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px">En progreso</span>`;
+    if (a.estado === 'Reportada — pendiente verificación ST') return `<span style="background:#fef3c7;color:#92400e;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px">⏳ Pendiente ST</span>`;
+    if (a.estado === 'Rechazado')     return `<span style="background:#fee2e2;color:#b91c1c;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px">⛔ Devuelto por ST</span>`;
     return `<span style="background:#f1f5f9;color:#64748b;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px">Por iniciar</span>`;
   };
 
@@ -248,10 +286,12 @@ function renderAgenda(mine, today, actionLink) {
           </div>
         </div>
         ${a.producto_verificable ? `<div style="font-size:12px;color:var(--ink-3);background:var(--bg);padding:8px 12px;border-radius:6px;margin-bottom:8px"><b style="color:var(--ink-2)">Producto esperado:</b> ${a.producto_verificable}</div>` : ''}
-        ${!done && actionLink ? `
+        ${a.estado === 'Rechazado' && a.notas_bloqueador ? `<div style="font-size:12px;background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:8px 12px;margin-bottom:8px;color:#991b1b"><b>⛔ Devuelto por ST:</b> ${a.notas_bloqueador.replace(/^Devuelto por ST:\s*/i, '')}</div>` : ''}
+        ${a.estado === 'Reportada — pendiente verificación ST' ? `<div style="font-size:12px;color:#92400e;background:#fef3c7;padding:8px 12px;border-radius:6px;margin-top:4px">⏳ Enviada a la ST para verificación. Recibirás un correo con el resultado.</div>` : ''}
+        ${!done && a.estado !== 'Reportada — pendiente verificación ST' && actionLink ? `
           <div style="display:flex;gap:8px;margin-top:8px">
             <a href="${actionLink(a.id, false)}" target="_blank" rel="noopener" style="background:var(--green);color:#fff;padding:7px 14px;border-radius:6px;font-size:12px;font-weight:600;text-decoration:none">✅ Ya la completé</a>
-            <a href="${actionLink(a.id, true)}" target="_blank" rel="noopener" style="background:#fff;color:var(--amber);border:1px solid var(--amber);padding:7px 14px;border-radius:6px;font-size:12px;font-weight:600;text-decoration:none">⚠ Reportar obstáculo</a>
+            <a href="${actionLink(a.id, true)}" target="_blank" rel="noopener" style="background:#fff;color:var(--amber);border:1px solid var(--amber);padding:7px 14px;border-radius:6px;font-size:12px;font-weight:600;text-decoration:none">⚠ Reportar situación</a>
           </div>
         ` : ''}
       </div>

@@ -38,10 +38,14 @@ async function open(id) {
       </div>
       <button data-close style="background:none;border:0;font-size:24px;color:var(--muted);cursor:pointer">×</button>
     </div>
+    ${a.estado === 'Rechazado' ? `
+    <div style="margin-bottom:14px;padding:12px 14px;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:8px;font-size:13px;color:#991b1b">
+      <b>⛔ ST rechazó este reporte.</b>${a.notas_bloqueador ? `<br><span style="color:#7f1d1d">${a.notas_bloqueador}</span>` : ''}
+      <br><span style="font-size:12px;color:#b91c1c">Corrige la evidencia y vuelve a reportar.</span>
+    </div>` : ''}
     <div style="font-size:13px;line-height:1.6;color:var(--ink-3)">${a.que_se_hace || ''}</div>
     <div style="margin-top:16px;padding:14px;background:var(--bg);border-radius:8px;font-size:12px;line-height:1.7">
       <div><b>Producto:</b> ${a.producto_verificable || '—'}</div>
-      <div><b>Evidencia:</b> ${a.evidencia_minima || '—'}</div>
       <div><b>Responsable:</b> ${a.lidera_apoya}</div>
       <div><b>Plazo:</b> ${formatDate(new Date(a.fecha_limite))}</div>
       <div><b>Submesa:</b> ${a.submesa || '—'} · <b>Tipo:</b> ${a.tipo || '—'}</div>
@@ -77,9 +81,14 @@ function renderActions(a) {
     if (blocker) u.searchParams.set('bloqueador', 'true');
     return u.toString();
   };
-  return `<div style="margin-top:18px;display:flex;gap:8px">
-    <a href="${buildUrl(false)}" target="_blank" rel="noopener" style="background:var(--green);color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">✅ Reportar completada</a>
-    <a href="${buildUrl(true)}" target="_blank" rel="noopener" style="background:var(--orange);color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">⚠ Reportar obstáculo</a>
+  const evidenciaHtml = a.evidencia_minima ? `
+    <div style="margin-top:18px;padding:12px 14px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:8px;font-size:12px;color:#166534">
+      <b>📎 Evidencia requerida antes de reportar:</b><br>${a.evidencia_minima}
+    </div>` : '';
+  return `${evidenciaHtml}
+  <div style="margin-top:10px;display:flex;gap:8px">
+    <a href="${buildUrl(false)}" target="_blank" rel="noopener" style="background:var(--green);color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">✅ Ya la completé</a>
+    <a href="${buildUrl(true)}" target="_blank" rel="noopener" style="background:var(--orange);color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">⚠ Reportar situación</a>
   </div>`;
 }
 

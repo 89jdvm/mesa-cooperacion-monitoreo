@@ -4,7 +4,7 @@
 
 import { daysBetween } from './utils.js';
 
-const EXCLUDED_STATES = new Set(['Completado', 'Reportada — pendiente verificación ST']);
+const EXCLUDED_STATES = new Set(['Completado', 'Reportada — pendiente verificación ST', 'Rechazado']);
 
 export function scoreActivity(a, today) {
   if (EXCLUDED_STATES.has(a.estado)) return 0;

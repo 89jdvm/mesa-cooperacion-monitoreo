@@ -80,7 +80,8 @@ function rowHtml(a, today) {
     'Atrasado': ['late', 'Atrasada'],
     'En progreso': ['prog', 'En progreso'],
     'No iniciado': ['pend', 'Por iniciar'],
-    'Reportada — pendiente verificación ST': ['verify', 'Verificar']
+    'Reportada — pendiente verificación ST': ['verify', 'Verificar'],
+    'Rechazado': ['late', 'Devuelto por ST']
   };
   const [cls, label] = statusMap[a.estado] || ['pend', a.estado];
   const rowCls = cls === 'late' ? 'late' : cls === 'verify' ? 'verify' : '';
