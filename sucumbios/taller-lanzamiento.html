@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Taller de Lanzamiento · Mesa de Cooperación Sucumbíos · 25 abr 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #06090f;
+  --surface:  #0d1320;
+  --card:     #121b2e;
+  --border:   #1c2d44;
+  --line:     #162035;
+
+  --text:     #e8f0fb;
+  --text-2:   #94aac8;
+  --muted:    #4a6180;
+
+  --green:    #10b981;
+  --green-bg: #071a12;
+  --green-lt: #34d399;
+
+  --blue:     #3b82f6;
+  --blue-bg:  #071222;
+  --blue-lt:  #60a5fa;
+
+  --amber:    #f59e0b;
+  --amber-bg: #140d00;
+
+  --purple:   #a78bfa;
+  --purple-bg:#100a1e;
+
+  --red:      #f87171;
+
+  --sans: 'Inter', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+/* ── STICKY NAV ── */
+.nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(6,9,15,.97);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 40px;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 56px; gap: 16px;
+}
+.nav-brand {
+  font-weight: 800; font-size: 15px;
+  color: var(--green-lt); letter-spacing: -.02em;
+  white-space: nowrap;
+}
+.nav-links {
+  display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none;
+}
+.nav-links::-webkit-scrollbar { display: none; }
+.nav-links a {
+  font-family: var(--mono); font-size: 10px; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase;
+  text-decoration: none; color: var(--muted);
+  padding: 6px 11px; border-radius: 6px;
+  transition: all .12s; white-space: nowrap;
+}
+.nav-links a:hover { background: var(--surface); color: var(--text); }
+.nav-time {
+  font-family: var(--mono); font-size: 12px;
+  color: var(--muted); white-space: nowrap;
+}
+
+/* ── SECTIONS ── */
+.section {
+  padding: 80px 0;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+.section:last-of-type { border-bottom: none; }
+
+.wrap { max-width: 960px; margin: 0 auto; padding: 0 48px; }
+
+/* Section number watermark */
+.section::before {
+  content: attr(data-n);
+  position: absolute; right: -20px; top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--mono); font-weight: 900;
+  font-size: 180px; line-height: 1;
+  color: rgba(255,255,255,.018);
+  pointer-events: none; user-select: none;
+  letter-spacing: -.05em;
+}
+
+/* ── EYEBROW ── */
+.eyebrow {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  letter-spacing: .16em; text-transform: uppercase;
+  margin-bottom: 18px;
+}
+.eyebrow-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: currentColor; flex-shrink: 0;
+}
+.c-green  { color: var(--green-lt); }
+.c-blue   { color: var(--blue-lt); }
+.c-amber  { color: var(--amber); }
+.c-purple { color: var(--purple); }
+.c-muted  { color: var(--muted); }
+
+/* ── HEADINGS ── */
+h1 {
+  font-size: clamp(36px, 5vw, 60px);
+  font-weight: 900; line-height: 1.1;
+  letter-spacing: -.03em; margin-bottom: 20px;
+}
+h2 {
+  font-size: clamp(26px, 3.5vw, 40px);
+  font-weight: 800; line-height: 1.15;
+  letter-spacing: -.025em; margin-bottom: 16px;
+}
+h3 {
+  font-size: 20px; font-weight: 700;
+  letter-spacing: -.01em; margin-bottom: 12px;
+}
+.accent { color: var(--green-lt); }
+.accent-blue { color: var(--blue-lt); }
+.accent-amber { color: var(--amber); }
+
+/* ── LEAD TEXT ── */
+.lead {
+  font-size: 19px; color: var(--text-2);
+  line-height: 1.65; max-width: 680px;
+  margin-bottom: 36px;
+}
+
+/* ── HERO ── */
+.hero-section {
+  padding: 100px 0 80px;
+  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(16,185,129,.08) 0%, transparent 70%);
+}
+.hero-kicker {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.25);
+  border-radius: 20px; padding: 6px 16px; margin-bottom: 28px;
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--green-lt);
+}
+.hero-kicker-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green-lt); animation: blink 1.8s infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+.hero-title { margin-bottom: 12px; }
+.hero-sub {
+  font-size: clamp(28px, 3vw, 44px); font-weight: 300;
+  color: var(--text-2); letter-spacing: -.015em; margin-bottom: 28px;
+}
+.hero-chips {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 48px;
+}
+.chip {
+  font-family: var(--mono); font-size: 12px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; padding: 5px 14px; color: var(--text-2);
+}
+.chip b { color: var(--text); }
+
+/* ── GOAL CARDS ── */
+.goal-grid {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 12px;
+  margin-bottom: 0;
+}
+.goal-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 24px;
+}
+.goal-num {
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 10px;
+}
+.goal-text {
+  font-size: 17px; font-weight: 600; line-height: 1.4;
+  color: var(--text);
+}
+.goal-card.featured {
+  background: linear-gradient(135deg, #071a12, #0a2218);
+  border-color: rgba(16,185,129,.3);
+}
+.goal-card.featured .goal-text { color: var(--green-lt); }
+
+/* ── AGENDA STRIP ── */
+.agenda {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;
+  margin-bottom: 48px;
+}
+.agenda-item {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px 12px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.agenda-time {
+  font-family: var(--mono); font-size: 10px; font-weight: 700;
+  letter-spacing: .08em; color: var(--muted);
+}
+.agenda-label {
+  font-size: 13px; font-weight: 700; color: var(--text);
+  line-height: 1.3;
+}
+.agenda-item.active {
+  border-color: rgba(16,185,129,.4);
+  background: linear-gradient(135deg, #071a12, #0a1c18);
+}
+.agenda-item.active .agenda-time { color: var(--green-lt); }
+.agenda-item.active .agenda-label { color: var(--green-lt); }
+
+/* ── WHAT IS SECTION ── */
+.two-col {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+  margin-bottom: 36px;
+}
+.info-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 28px;
+}
+.info-card h3 { margin-bottom: 10px; color: var(--text); }
+.info-card p { font-size: 15px; color: var(--text-2); line-height: 1.65; }
+
+/* ── SUBMESA GRID ── */
+.submesa-grid {
+  display: grid; grid-template-columns: repeat(5,1fr); gap: 8px;
+  margin-bottom: 36px;
+}
+.submesa-card {
+  border-radius: 12px; padding: 18px 14px;
+  border: 1px solid; text-align: center;
+}
+.submesa-code {
+  font-family: var(--mono); font-size: 22px; font-weight: 800;
+  margin-bottom: 6px;
+}
+.submesa-name {
+  font-size: 11px; font-weight: 600; letter-spacing: .03em;
+  line-height: 1.3;
+}
+.sm-1 { background:#071a0e; border-color:#134d2e; color:#34d399; }
+.sm-2 { background:#0d0f25; border-color:#1e2660; color:#818cf8; }
+.sm-3 { background:#1a0a1e; border-color:#4a1560; color:#e879f9; }
+.sm-4 { background:#1a0e00; border-color:#3d2200; color:var(--amber); }
+.sm-5 { background:#071522; border-color:#0e3055; color:#38bdf8; }
+
+/* ── FEATURE LIST ── */
+.feat-list {
+  list-style: none; display: flex; flex-direction: column; gap: 8px;
+  margin-bottom: 32px;
+}
+.feat-list li {
+  display: flex; align-items: flex-start; gap: 14px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px 18px;
+  font-size: 16px; color: var(--text-2); line-height: 1.55;
+}
+.feat-list li .icon {
+  font-size: 20px; flex-shrink: 0; margin-top: 1px;
+}
+.feat-list li strong { color: var(--text); }
+
+/* ── ACTORS TABLE ── */
+.actors-table {
+  width: 100%; border-collapse: collapse;
+  font-size: 14px; margin-bottom: 32px;
+}
+.actors-table th {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--muted);
+  text-align: left; padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.actors-table td {
+  padding: 13px 14px; border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+.actors-table tr:last-child td { border-bottom: none; }
+.actors-table tr:hover td { background: var(--surface); }
+.a-name { font-weight: 700; font-size: 15px; }
+.a-inst { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--mono); font-size: 10px; font-weight: 700;
+  letter-spacing: .06em; padding: 4px 10px; border-radius: 5px;
+  white-space: nowrap; border: 1px solid;
+}
+.b-st     { background:#071a12; color:#34d399; border-color:#134d2e; }
+.b-s1     { background:#071a0e; color:#34d399; border-color:#134d2e; }
+.b-s2     { background:#0d0f25; color:#818cf8; border-color:#1e2660; }
+.b-s3     { background:#1a0a1e; color:#e879f9; border-color:#4a1560; }
+.b-s4     { background:#1a0e00; color:var(--amber); border-color:#3d2200; }
+.b-s5     { background:#071522; color:#38bdf8; border-color:#0e3055; }
+.b-apoyo  { background:var(--surface); color:var(--muted); border-color:var(--border); }
+.a-action { font-size: 12px; color: var(--text-2); }
+.a-action strong { color: var(--amber); }
+
+/* ── STEPS ── */
+.steps-list {
+  display: flex; flex-direction: column; gap: 0;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; overflow: hidden; margin-bottom: 32px;
+}
+.step-row {
+  display: flex; align-items: flex-start; gap: 16px;
+  padding: 16px 22px; border-bottom: 1px solid var(--line);
+}
+.step-row:last-child { border-bottom: none; }
+.step-n {
+  width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+  background: var(--green-bg); border: 1px solid rgba(16,185,129,.3);
+  color: var(--green-lt); font-family: var(--mono); font-size: 12px;
+  font-weight: 800; display: flex; align-items: center; justify-content: center;
+  margin-top: 1px;
+}
+.step-body { font-size: 15px; color: var(--text); line-height: 1.55; }
+.step-body span { color: var(--text-2); font-size: 13px; display: block; margin-top: 3px; }
+code {
+  font-family: var(--mono); font-size: 12px;
+  background: rgba(255,255,255,.07); padding: 2px 7px;
+  border-radius: 4px; color: var(--green-lt);
+}
+
+/* ── NOTICE BOXES ── */
+.notice {
+  border-radius: 10px; padding: 16px 20px;
+  font-size: 15px; line-height: 1.6; margin-bottom: 24px;
+  border-left: 3px solid;
+}
+.notice-green {
+  background: var(--green-bg); border-color: var(--green);
+  color: #a7f3d0;
+}
+.notice-green strong { color: var(--green-lt); }
+.notice-amber {
+  background: var(--amber-bg); border-color: var(--amber);
+  color: #fcd38a;
+}
+.notice-amber strong { color: var(--amber); }
+.notice-blue {
+  background: var(--blue-bg); border-color: var(--blue);
+  color: #93c5fd;
+}
+.notice-blue strong { color: var(--blue-lt); }
+
+/* ── WHAT YOU DO ── */
+.action-cards {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  margin-bottom: 32px;
+}
+.action-card {
+  border-radius: 14px; padding: 24px; border: 1px solid;
+}
+.action-card-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 14px;
+}
+.action-icon { font-size: 28px; }
+.action-title { font-size: 16px; font-weight: 700; }
+.action-card ul {
+  list-style: none; display: flex; flex-direction: column; gap: 6px;
+}
+.action-card ul li {
+  font-size: 14px; color: var(--text-2); line-height: 1.5;
+  display: flex; gap: 8px; align-items: flex-start;
+}
+.action-card ul li::before { content: "→"; flex-shrink: 0; }
+.action-card.green { background: var(--green-bg); border-color: rgba(16,185,129,.25); }
+.action-card.green .action-title { color: var(--green-lt); }
+.action-card.blue  { background: var(--blue-bg);  border-color: rgba(59,130,246,.25); }
+.action-card.blue  .action-title { color: var(--blue-lt); }
+
+/* ── REPORTING FLOW ── */
+.flow {
+  display: flex; align-items: stretch; gap: 0;
+  margin-bottom: 32px; overflow-x: auto;
+}
+.flow-step {
+  flex: 1; background: var(--card); border: 1px solid var(--border);
+  border-radius: 0; padding: 20px 16px; text-align: center;
+  position: relative; min-width: 130px;
+}
+.flow-step:first-child { border-radius: 12px 0 0 12px; }
+.flow-step:last-child  { border-radius: 0 12px 12px 0; }
+.flow-step + .flow-step { border-left: none; }
+.flow-icon { font-size: 28px; margin-bottom: 8px; display: block; }
+.flow-label { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.flow-sub   { font-size: 11px; color: var(--muted); line-height: 1.4; }
+.flow-arrow {
+  display: flex; align-items: center;
+  font-size: 18px; color: var(--muted); padding: 0 4px;
+}
+
+/* ── REMINDER TIMELINE ── */
+.timeline {
+  display: flex; flex-direction: column; gap: 0;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; overflow: hidden; margin-bottom: 32px;
+}
+.tl-row {
+  display: flex; align-items: center; gap: 16px;
+  padding: 14px 22px; border-bottom: 1px solid var(--line);
+}
+.tl-row:last-child { border-bottom: none; }
+.tl-dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  background: currentColor;
+}
+.tl-when { font-family: var(--mono); font-size: 11px; font-weight: 700; min-width: 140px; }
+.tl-what { font-size: 14px; color: var(--text-2); }
+
+/* ── HOJA DE RUTA SECTION ── */
+.hoja-cards {
+  display: grid; grid-template-columns: repeat(5,1fr); gap: 8px;
+  margin-bottom: 28px;
+}
+.hoja-card {
+  border-radius: 12px; padding: 16px 14px; border: 1px solid;
+}
+.hoja-sub { font-family: var(--mono); font-size: 11px; font-weight: 700; margin-bottom: 6px; }
+.hoja-count { font-size: 28px; font-weight: 900; margin-bottom: 4px; }
+.hoja-status { font-size: 11px; line-height: 1.4; }
+.h-ok   { background:#071a0e; border-color:#134d2e; color:#34d399; }
+.h-warn { background:#1a0e00; border-color:#3d2200; color:var(--amber); }
+.h-none { background:#1a0a1e; border-color:#4a1560; color:#e879f9; }
+
+/* ── CIERRE ── */
+.triggers-grid {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 10px;
+  margin-bottom: 32px;
+}
+.trigger-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 20px;
+}
+.trigger-icon { font-size: 24px; margin-bottom: 10px; }
+.trigger-name { font-family: var(--mono); font-size: 11px; color: var(--green-lt); margin-bottom: 6px; }
+.trigger-desc { font-size: 13px; color: var(--text-2); line-height: 1.5; }
+
+/* ── CLOSING STATEMENT ── */
+.closing {
+  text-align: center; padding: 60px 40px;
+  background: radial-gradient(ellipse 60% 80% at 50% 100%, rgba(16,185,129,.07) 0%, transparent 60%);
+}
+.closing h2 { font-size: 36px; margin-bottom: 12px; }
+.closing p { font-size: 18px; color: var(--text-2); max-width: 560px; margin: 0 auto 32px; }
+.closing-chips {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;
+}
+.closing-chip {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 20px; padding: 8px 18px;
+  font-size: 14px; color: var(--text-2);
+}
+.closing-chip b { color: var(--green-lt); }
+
+/* ── DIVIDER ── */
+.div-label {
+  margin: 48px 0 24px;
+  font-family: var(--mono); font-size: 10px; font-weight: 700;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--muted);
+  display: flex; align-items: center; gap: 12px;
+}
+.div-label::before, .div-label::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+@media (max-width: 768px) {
+  .wrap { padding: 0 20px; }
+  .section { padding: 56px 0; }
+  .goal-grid, .submesa-grid, .hoja-cards { grid-template-columns: repeat(2,1fr); }
+  .agenda { grid-template-columns: repeat(3,1fr); }
+  .two-col, .action-cards, .triggers-grid { grid-template-columns: 1fr; }
+  h1 { font-size: 32px; }
+  h2 { font-size: 26px; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <span class="nav-brand">Mesa de Cooperación · Sucumbíos</span>
+  <div class="nav-links">
+    <a href="#bienvenida">Bienvenida</a>
+    <a href="#que-es">¿Qué es?</a>
+    <a href="#actores">Actores</a>
+    <a href="#como-funciona">Cómo funciona</a>
+    <a href="#practica">Práctica</a>
+    <a href="#hoja-de-ruta">Hoja de ruta</a>
+    <a href="#cierre">Cierre</a>
+  </div>
+  <span class="nav-time">Viernes 25 abr · 15:00 ECT</span>
+</nav>
+
+
+<!-- ══════════════════════════════════════════
+     SECCIÓN 0 · BIENVENIDA
+══════════════════════════════════════════ -->
+<section id="bienvenida" class="section hero-section" data-n="0">
+<div class="wrap">
+
+  <div class="hero-kicker">
+    <span class="hero-kicker-dot"></span>
+    Taller de lanzamiento · 25 de abril, 2026
+  </div>
+
+  <h1 class="hero-title">
+    Plataforma de Monitoreo<br>
+    <span class="accent">Mesa de Cooperación</span><br>
+    <span style="font-weight:300;color:var(--text-2)">Sucumbíos</span>
+  </h1>
+
+  <div class="hero-chips">
+    <span class="chip"><b>Hora:</b> 15:00 – 16:00 ECT</span>
+    <span class="chip"><b>Participantes:</b> 9</span>
+    <span class="chip"><b>Duración:</b> 1 hora</span>
+    <span class="chip"><b>Anfitriona:</b> Andrea Girón · ST GADPS</span>
+  </div>
+
+  <div class="div-label">Agenda · 1 hora</div>
+  <div class="agenda">
+    <div class="agenda-item">
+      <span class="agenda-time">0:00–0:05</span>
+      <span class="agenda-label">Apertura</span>
+    </div>
+    <div class="agenda-item">
+      <span class="agenda-time">0:05–0:15</span>
+      <span class="agenda-label">Tour del dashboard</span>
+    </div>
+    <div class="agenda-item">
+      <span class="agenda-time">0:15–0:25</span>
+      <span class="agenda-label">Login en vivo</span>
+    </div>
+    <div class="agenda-item active">
+      <span class="agenda-time">0:25–0:45</span>
+      <span class="agenda-label">Práctica: reportar un avance</span>
+    </div>
+    <div class="agenda-item">
+      <span class="agenda-time">0:45–0:50</span>
+      <span class="agenda-label">Hoja de ruta operativa</span>
+    </div>
+    <div class="agenda-item">
+      <span class="agenda-time">0:50–0:55</span>
+      <span class="agenda-label">Verificación ST</span>
+    </div>
+    <div class="agenda-item">
+      <span class="agenda-time">0:55–1:00</span>
+      <span class="agenda-label">Cierre y activación</span>
+    </div>
+  </div>
+
+  <div class="goal-grid">
+    <div class="goal-card featured">
+      <div class="goal-num">Meta de hoy</div>
+      <div class="goal-text">Cada participante activa su acceso y registra un avance real</div>
+    </div>
+    <div class="goal-card">
+      <div class="goal-num">Lo que se activa</div>
+      <div class="goal-text">Sistema de recordatorios automáticos por correo</div>
+    </div>
+    <div class="goal-card">
+      <div class="goal-num">A partir de hoy</div>
+      <div class="goal-text">La Secretaría Técnica lidera el seguimiento de forma autónoma</div>
+    </div>
+  </div>
+
+</div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     SECCIÓN 1 · ¿QUÉ ES LA PLATAFORMA?
+══════════════════════════════════════════ -->
+<section id="que-es" class="section" data-n="1">
+<div class="wrap">
+
+  <div class="eyebrow c-blue"><span class="eyebrow-dot"></span>Sección 1 · 0:05–0:15 · Tour del dashboard</div>
+  <h2>¿Qué es y qué pueden ver?</h2>
+  <p class="lead">Una plataforma de monitoreo en tiempo real para las 5 Submesas. Visible para cualquier ciudadano — sin login.</p>
+
+  <div class="submesa-grid">
+    <div class="submesa-card sm-1">
+      <div class="submesa-code">S1</div>
+      <div class="submesa-name">Gestión Ambiental</div>
+    </div>
+    <div class="submesa-card sm-2">
+      <div class="submesa-code">S2</div>
+      <div class="submesa-name">Agroproductivo</div>
+    </div>
+    <div class="submesa-card sm-3">
+      <div class="submesa-code">S3</div>
+      <div class="submesa-name">Patrimonio Cultural</div>
+    </div>
+    <div class="submesa-card sm-4">
+      <div class="submesa-code">S4</div>
+      <div class="submesa-name">Social</div>
+    </div>
+    <div class="submesa-card sm-5">
+      <div class="submesa-code">S5</div>
+      <div class="submesa-name">Gobernanza</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="info-card">
+      <h3 class="accent-blue">Vista pública</h3>
+      <p>Avance por Submesa, próximos hitos, línea de tiempo 2026–2028. Visible para cualquier ciudadano o aliado de la Mesa. <strong>No requiere login ni contraseña.</strong></p>
+    </div>
+    <div class="info-card">
+      <h3 class="accent">"Mi trabajo"</h3>
+      <p>Panel personal de cada líder de Submesa. Muestra solo sus actividades, los plazos que vienen y los botones para reportar avances. <strong>Acceso con enlace personal.</strong></p>
+    </div>
+  </div>
+
+  <ul class="feat-list">
+    <li>
+      <span class="icon">🔗</span>
+      <div><strong>Acceso personal</strong> — un enlace único por persona. No requiere contraseña. Quien tenga el enlace entra como tú. <strong>No lo compartas.</strong></div>
+    </li>
+    <li>
+      <span class="icon">✅</span>
+      <div><strong>Cola de verificación</strong> — la Secretaría Técnica aprueba cada reporte antes de que sea visible en el panel público. El dato que sale es dato real.</div>
+    </li>
+    <li>
+      <span class="icon">📅</span>
+      <div><strong>Frecuencia de correos</strong> — solo cuando hace falta. 7 días antes del plazo, el día del plazo, 3 días de atraso, escalación. No es spam.</div>
+    </li>
+    <li>
+      <span class="icon">🏆</span>
+      <div><strong>Podio de Submesas</strong> — visibilidad positiva del avance. Las Submesas que más avanzan aparecen destacadas. No es un ranking punitivo.</div>
+    </li>
+  </ul>
+
+</div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     SECCIÓN 2 · ACTORES
+══════════════════════════════════════════ -->
+<section id="actores" class="section" data-n="2">
+<div class="wrap">
+
+  <div class="eyebrow c-purple"><span class="eyebrow-dot"></span>Sección 2 · 0:15–0:25 · Login en vivo</div>
+  <h2>Participantes de hoy</h2>
+  <p class="lead">Cada uno entra con su acceso personal — el enlace que llegó a su correo institucional.</p>
+
+  <div class="notice notice-blue" style="margin-bottom:28px">
+    <strong>Busca en tu correo:</strong> el asunto es <em>"Tu acceso personal — Mesa de Cooperación de Sucumbíos"</em>. Si no lo encuentras, revisa Spam o Promociones.
+  </div>
+
+  <table class="actors-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Persona</th>
+        <th>Rol</th>
+        <th>Hoy</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="color:var(--muted);font-family:var(--mono);font-size:12px">1</td>
+        <td><div class="a-name">Andrea Girón</div><div class="a-inst">Secretaría Técnica · GADPS</div></td>
+        <td><span class="badge b-st">ST · anfitriona</span></td>
+        <td class="a-action">Confirma acceso · <strong>verifica reportes</strong></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted);font-family:var(--mono);font-size:12px">2</td>
+        <td><div class="a-name">Angie Vélez</div><div class="a-inst">Secretaría Técnica · GADPS</div></td>
+        <td><span class="badge b-st">ST</span></td>
+        <td class="a-action">Confirma acceso</td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted);font-family:var(--mono);font-size:12px">3</td>
+        <td><div class="a-name">Ismael Silva</div><div class="a-inst">Secretaría Técnica · GADPS</div></td>
+        <td><span class="badge b-st">ST</span></td>
+        <td class="a-action">Confirma acceso</td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted);font-family:var(--mono);font-size:12px">4</td>
+        <td><div class="a-name">Holger Salas</div><div class="a-inst">Dirección Gestión Ambiental · GADPS</div></td>
+        <td><span class="badge b-s1">S1 Ambiental</span></td>
+        <td class="a-action"><strong>Reporta en vivo</strong></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted);font-family:var(--mono);font-size:12px">5</td>
+        <td><div class="a-name">Franklin Pozo</div><div class="a-inst">CorpoSucumbíos</div></td>
+        <td><span class="badge b-s2">S2 Agroproductivo</span></td>
+        <td class="a-action"><strong>Reporta en vivo</strong></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted);font-family:var(--mono);font-size:12px">6</td>
+        <td><div class="a-name">Juan Cerda</div><div class="a-inst">Dir. Nacionalidades y Turismo · GADPS</div></td>
+        <td><span class="badge b-s3">S3 Patrimonio</span></td>
+        <td class="a-action"><strong>Reporta en vivo</strong> (titular S3)</td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted);font-family:var(--mono);font-size:12px">7</td>
+        <td><div class="a-name">Gabriel Calderón</div><div class="a-inst">Dir. Nacionalidades y Turismo · GADPS</div></td>
+        <td><span class="badge b-apoyo">S3 apoyo</span></td>
+        <td class="a-action">Confirma acceso · observa la práctica</td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted);font-family:var(--mono);font-size:12px">8</td>
+        <td><div class="a-name">Ricardo Maza</div><div class="a-inst">Sucumbíos Solidario</div></td>
+        <td><span class="badge b-s4">S4 Social</span></td>
+        <td class="a-action"><strong>Reporta en vivo</strong></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted);font-family:var(--mono);font-size:12px">9</td>
+        <td><div class="a-name">Edwin Herrera</div><div class="a-inst">Dir. de Planificación · GADPS</div></td>
+        <td><span class="badge b-s5">S5 Gobernanza</span></td>
+        <td class="a-action"><strong>Reporta en vivo</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     SECCIÓN 3 · CÓMO FUNCIONA
+══════════════════════════════════════════ -->
+<section id="como-funciona" class="section" data-n="3">
+<div class="wrap">
+
+  <div class="eyebrow c-green"><span class="eyebrow-dot"></span>Sección 3 · 0:25–0:45 · Práctica en vivo</div>
+  <h2>¿Cómo reportas un avance?</h2>
+  <p class="lead">El flujo completo desde tu panel personal hasta que el avance es público en el dashboard.</p>
+
+  <div class="div-label">Flujo de un reporte</div>
+  <div class="flow" style="margin-bottom:32px">
+    <div class="flow-step">
+      <span class="flow-icon">📬</span>
+      <div class="flow-label">1 · Abres tu enlace</div>
+      <div class="flow-sub">Desde el correo que recibiste</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <span class="flow-icon">📋</span>
+      <div class="flow-label">2 · "Mi trabajo"</div>
+      <div class="flow-sub">Ves tus actividades y plazos</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <span class="flow-icon">✅</span>
+      <div class="flow-label">3 · "Ya la completé"</div>
+      <div class="flow-sub">Click en el botón verde</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <span class="flow-icon">📎</span>
+      <div class="flow-label">4 · Evidencia</div>
+      <div class="flow-sub">Pegas un enlace: acta, foto, documento en Drive</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <span class="flow-icon">🛡️</span>
+      <div class="flow-label">5 · ST verifica</div>
+      <div class="flow-sub">Andrea recibe notificación y valida</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step" style="background:var(--green-bg);border-color:rgba(16,185,129,.25)">
+      <span class="flow-icon">🌐</span>
+      <div class="flow-label" style="color:var(--green-lt)">6 · Publicado</div>
+      <div class="flow-sub">Aparece en el dashboard público</div>
+    </div>
+  </div>
+
+  <div class="div-label">Demo en vivo · abre estas tres vistas</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:32px">
+
+    <a href="https://89jdvm.github.io/mesa-cooperacion-monitoreo/sucumbios/" target="_blank" rel="noopener"
+       style="display:flex;flex-direction:column;gap:8px;padding:20px 22px;background:var(--green-bg);border:1px solid rgba(16,185,129,.3);border-radius:12px;text-decoration:none;transition:border-color .15s"
+       onmouseover="this.style.borderColor='rgba(52,211,153,.6)'" onmouseout="this.style.borderColor='rgba(16,185,129,.3)'">
+      <div style="font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--green)">1 · Dashboard público</div>
+      <div style="font-size:15px;font-weight:700;color:var(--green-lt)">Vista ciudadana →</div>
+      <div style="font-size:12px;color:var(--text-2);line-height:1.5">Sin login. Lo que ve cualquier persona. Muestra el avance consolidado de las 5 submesas.</div>
+    </a>
+
+    <a href="https://89jdvm.github.io/mesa-cooperacion-monitoreo/sucumbios/?actor=secretaria-tecnica-gadps-andrea-giron&token=9fb3887e96004cfea673e80a63dbe54d#mi-trabajo" target="_blank" rel="noopener"
+       style="display:flex;flex-direction:column;gap:8px;padding:20px 22px;background:var(--blue-bg);border:1px solid rgba(59,130,246,.3);border-radius:12px;text-decoration:none;transition:border-color .15s"
+       onmouseover="this.style.borderColor='rgba(96,165,250,.6)'" onmouseout="this.style.borderColor='rgba(59,130,246,.3)'">
+      <div style="font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--blue)">2 · Mi trabajo · ST</div>
+      <div style="font-size:15px;font-weight:700;color:var(--blue-lt)">Andrea Girón →</div>
+      <div style="font-size:12px;color:var(--text-2);line-height:1.5">Panel de la Secretaría Técnica. Muestra cómo se ve el panel con el botón de verificación.</div>
+    </a>
+
+    <a href="https://89jdvm.github.io/mesa-cooperacion-monitoreo/sucumbios/?actor=direccion-gestion-ambiental-gadps-holger-salas&token=0b39a64a0a294b1d986512068f41f2b8#mi-trabajo" target="_blank" rel="noopener"
+       style="display:flex;flex-direction:column;gap:8px;padding:20px 22px;background:var(--card);border:1px solid var(--border);border-radius:12px;text-decoration:none;transition:border-color .15s"
+       onmouseover="this.style.borderColor='rgba(167,139,250,.5)'" onmouseout="this.style.borderColor='var(--border)'">
+      <div style="font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--purple)">3 · Mi trabajo · S1</div>
+      <div style="font-size:15px;font-weight:700;color:var(--text)">Holger Salas →</div>
+      <div style="font-size:12px;color:var(--text-2);line-height:1.5">Panel de Submesa. El que tiene más actividades propias. Demo del flujo "Ya la completé".</div>
+    </a>
+
+  </div>
+
+  <div class="action-cards">
+    <div class="action-card green">
+      <div class="action-card-header">
+        <span class="action-icon">👤</span>
+        <span class="action-title">Tu rol · Líder de Submesa</span>
+      </div>
+      <ul>
+        <li>Reportas el avance desde tu panel personal</li>
+        <li>Adjuntas evidencia: acta, foto, documento en Drive</li>
+        <li>Informas si hay obstáculos en el camino</li>
+        <li>Decides cuándo y qué reportar</li>
+      </ul>
+    </div>
+    <div class="action-card blue">
+      <div class="action-card-header">
+        <span class="action-icon">🛡️</span>
+        <span class="action-title">Rol ST · Secretaría Técnica</span>
+      </div>
+      <ul>
+        <li>Recibe notificación por correo de cada reporte</li>
+        <li>Revisa la evidencia y marca verificado</li>
+        <li>Da visibilidad pública al avance</li>
+        <li>Articula apoyo entre Submesas si hay obstáculos</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="div-label">Calendario de recordatorios automáticos</div>
+  <div class="timeline">
+    <div class="tl-row">
+      <div class="tl-dot c-green" style="color:var(--green-lt)"></div>
+      <div class="tl-when c-green">7 días antes del plazo</div>
+      <div class="tl-what">Recordatorio amable: "Este hito vence en una semana"</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-dot" style="color:var(--amber)"></div>
+      <div class="tl-when" style="color:var(--amber)">Día del plazo</div>
+      <div class="tl-what">Confirmación: "Hoy vence esta actividad"</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-dot" style="color:var(--amber)"></div>
+      <div class="tl-when" style="color:var(--amber)">3 días de atraso</div>
+      <div class="tl-what">Alerta de atraso — aún a tiempo de reportar</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-dot" style="color:var(--red)"></div>
+      <div class="tl-when" style="color:var(--red)">7+ días de atraso</div>
+      <div class="tl-what">Escalación a la Comisión de Seguimiento y Evaluación</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-dot c-green" style="color:var(--green-lt)"></div>
+      <div class="tl-when c-green">Cada lunes</div>
+      <div class="tl-what">Resumen semanal personal: tus actividades y plazos</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-dot c-green" style="color:var(--green-lt)"></div>
+      <div class="tl-when c-green">Día 1 de cada mes</div>
+      <div class="tl-what">Informe consolidado de la Mesa para todos los miembros</div>
+    </div>
+  </div>
+
+  <div class="notice notice-green">
+    <strong>Si no hay nada vencido ni por vencer, no recibes correos.</strong> Los recordatorios solo salen cuando son necesarios.
+  </div>
+
+</div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     SECCIÓN 4 · HOJA DE RUTA OPERATIVA
+══════════════════════════════════════════ -->
+<section id="hoja-de-ruta" class="section" data-n="4">
+<div class="wrap">
+
+  <div class="eyebrow c-amber"><span class="eyebrow-dot"></span>Sección 4 · 0:45–0:50 · Hoja de ruta operativa</div>
+  <h2>Necesitamos sus actividades <span class="accent-amber">operativas</span></h2>
+  <p class="lead">La plataforma ya tiene cargadas las actividades de gestión institucional de la Mesa. Ahora necesitamos las actividades concretas de cada Submesa.</p>
+
+  <div class="notice notice-amber">
+    <strong>Acción para cada Submesa:</strong> Completen la hoja de ruta con sus actividades operativas específicas. Les compartimos la tabla con lo que ya existe — agregan las suyas. <strong>Plazo: viernes 1 de mayo.</strong>
+  </div>
+
+  <div class="div-label">Estado actual de la hoja de ruta por Submesa</div>
+  <div class="hoja-cards">
+    <div class="hoja-card h-ok">
+      <div class="hoja-sub">S1 Ambiental</div>
+      <div class="hoja-count">67</div>
+      <div class="hoja-status">actividades cargadas · mayormente de gestión institucional</div>
+    </div>
+    <div class="hoja-card h-warn">
+      <div class="hoja-sub">S2 Agroproductivo</div>
+      <div class="hoja-count">12</div>
+      <div class="hoja-status">actividades · necesitan detalle operativo</div>
+    </div>
+    <div class="hoja-card h-none">
+      <div class="hoja-sub">S3 Patrimonio</div>
+      <div class="hoja-count">0</div>
+      <div class="hoja-status">sin actividades operativas · <strong>prioridad esta semana</strong></div>
+    </div>
+    <div class="hoja-card h-warn">
+      <div class="hoja-sub">S4 Social</div>
+      <div class="hoja-count">6</div>
+      <div class="hoja-status">solo hitos trimestrales genéricos · necesitan especificidad</div>
+    </div>
+    <div class="hoja-card h-warn">
+      <div class="hoja-sub">S5 Gobernanza</div>
+      <div class="hoja-count">8</div>
+      <div class="hoja-status">solo hitos trimestrales genéricos · necesitan especificidad</div>
+    </div>
+  </div>
+
+  <div class="div-label">¿Qué información necesitamos por actividad?</div>
+  <div class="steps-list">
+    <div class="step-row">
+      <div class="step-n">1</div>
+      <div class="step-body"><strong>Hito / actividad</strong> — nombre concreto de la actividad operativa<span>Ej: "Taller de monitoreo comunitario en comunidad X"</span></div>
+    </div>
+    <div class="step-row">
+      <div class="step-n">2</div>
+      <div class="step-body"><strong>Qué se hace</strong> — descripción breve de la acción<span>Ej: "Capacitación a 20 líderes comunitarios en uso de herramientas de monitoreo ambiental"</span></div>
+    </div>
+    <div class="step-row">
+      <div class="step-n">3</div>
+      <div class="step-body"><strong>Producto verificable</strong> — ¿qué evidencia demuestra que se hizo?<span>Ej: "Lista de asistencia firmada + informe fotográfico"</span></div>
+    </div>
+    <div class="step-row">
+      <div class="step-n">4</div>
+      <div class="step-body"><strong>Fecha límite</strong> — ¿para cuándo?<span>Formato: DD/MM/AAAA · dentro de Q2 2026 (hasta 30 junio)</span></div>
+    </div>
+    <div class="step-row">
+      <div class="step-n">5</div>
+      <div class="step-body"><strong>Quién lidera</strong> — institución o persona responsable de la Submesa<span>Ej: "Dirección de Gestión Ambiental GADPS" o nombre personal</span></div>
+    </div>
+  </div>
+
+</div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     SECCIÓN 5 · CIERRE
+══════════════════════════════════════════ -->
+<section id="cierre" class="section" data-n="5">
+<div class="wrap">
+
+  <div class="eyebrow c-green"><span class="eyebrow-dot"></span>Sección 5 · 0:55–1:00 · Cierre</div>
+  <h2>El sistema <span class="accent">corre solo</span> desde hoy</h2>
+  <p class="lead">Activamos los recordatorios automáticos en este momento. La Mesa queda con todo lo necesario para operar de forma autónoma.</p>
+
+  <div class="div-label">Lo que se activa ahora</div>
+  <div class="triggers-grid">
+    <div class="trigger-card">
+      <div class="trigger-icon">📅</div>
+      <div class="trigger-name">enviarRecordatoriosDiarios</div>
+      <div class="trigger-desc">Cada día a las 06:30 — verifica plazos y envía alertas a quienes corresponde</div>
+    </div>
+    <div class="trigger-card">
+      <div class="trigger-icon">📊</div>
+      <div class="trigger-name">enviarResumenSemanal</div>
+      <div class="trigger-desc">Cada lunes a las 06:30 — resumen personalizado de tus actividades</div>
+    </div>
+    <div class="trigger-card">
+      <div class="trigger-icon">📝</div>
+      <div class="trigger-name">verificarInformeMensual</div>
+      <div class="trigger-desc">Cada día 1 a las 07:00 — informe consolidado de la Mesa para todos</div>
+    </div>
+  </div>
+
+  <div class="notice notice-green" style="margin-bottom:40px">
+    <strong>Punto de contacto a partir de hoy:</strong> Para cualquier duda operativa de la plataforma, el punto de contacto es la <strong>Secretaría Técnica de la Mesa</strong> (Andrea Girón, GADPS). El sistema ya está documentado y configurado.
+  </div>
+
+  <!-- CLOSING STATEMENT -->
+  <div class="closing">
+    <h2>La Mesa de Cooperación <span class="accent">opera</span></h2>
+    <p>Gracias por su tiempo y compromiso. Nos vemos en la próxima reunión ordinaria de la Mesa en junio.</p>
+    <div class="closing-chips">
+      <span class="closing-chip">🌿 <b>S1</b> Gestión Ambiental</span>
+      <span class="closing-chip">🌾 <b>S2</b> Agroproductivo</span>
+      <span class="closing-chip">🎭 <b>S3</b> Patrimonio Cultural</span>
+      <span class="closing-chip">🤝 <b>S4</b> Social</span>
+      <span class="closing-chip">🏛️ <b>S5</b> Gobernanza</span>
+    </div>
+  </div>
+
+</div>
+</section>
+
+</body>
+</html>
