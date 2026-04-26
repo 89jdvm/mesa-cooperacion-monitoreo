@@ -46,3 +46,56 @@ export async function fetchJSON(url) {
   if (!r.ok) throw new Error(`fetch ${url}: ${r.status}`);
   return r.json();
 }
+
+const CSV_FIELDS = [
+  'id', 'trimestre', 'submesa', 'hito_operativo', 'que_se_hace', 'lidera_apoya',
+  'fecha_inicio', 'fecha_limite', 'estado', 'fecha_reporte', 'producto_verificable', 'evidencia_minima'
+];
+const CSV_HEADERS = [
+  'ID', 'Trimestre', 'Submesa', 'Hito Operativo', 'Qué se hace', 'Responsable',
+  'Fecha Inicio', 'Fecha Límite', 'Estado', 'Fecha Reporte', 'Producto Verificable', 'Evidencia Mínima'
+];
+const CSV_DATE_FIELDS = new Set(['fecha_inicio', 'fecha_limite', 'fecha_reporte']);
+
+const escapeCell = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+
+const formatCell = (a, field) => {
+  const v = a[field];
+  if (CSV_DATE_FIELDS.has(field)) {
+    if (!v) return '""';
+    const d = new Date(v);
+    if (isNaN(d)) return '""';
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return escapeCell(`${yyyy}-${mm}-${dd}`);
+  }
+  return escapeCell(v);
+};
+
+// Pure function — returns CSV string. Exported for testing.
+export function buildCsvContent(activities) {
+  const lines = [
+    CSV_HEADERS.map(escapeCell).join(','),
+    ...activities.map(a => CSV_FIELDS.map(f => formatCell(a, f)).join(','))
+  ];
+  return lines.join('\r\n');
+}
+
+export function exportCsv(activities, filter, province) {
+  const csv = buildCsvContent(activities);
+
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const filename = `actividades-${province}-${filter}-${yyyy}-${mm}-${dd}.csv`;
+
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}

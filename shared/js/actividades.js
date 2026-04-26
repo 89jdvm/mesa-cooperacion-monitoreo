@@ -1,13 +1,14 @@
 // shared/js/actividades.js
-import { formatDate, daysBetween } from './utils.js';
+import { formatDate, daysBetween, exportCsv } from './utils.js';
 
-export function renderActividades(mount, { activities, today }) {
+export function renderActividades(mount, { activities, today, provinceLabel = '' }) {
   const state = { filter: 'todas', search: '' };
 
   // Single delegated listener on mount — avoids re-attaching on every paint().
   mount.addEventListener('click', e => {
     const pill = e.target.closest('.pill, [data-filter]');
     if (pill) { e.preventDefault(); state.filter = pill.dataset.filter; paint(); return; }
+    if (e.target.closest('.btn-export-csv')) { exportCsv(filter(), state.filter, provinceLabel); return; }
     const row = e.target.closest('.tbl .row');
     if (row) window.dispatchEvent(new CustomEvent('open-activity', { detail: { id: row.dataset.id } }));
   });
@@ -55,7 +56,7 @@ export function renderActividades(mount, { activities, today }) {
       </div>
       <div style="display:flex;justify-content:space-between;margin-bottom:12px">
         <input id="act-search" placeholder="Buscar por ID, título o responsable…" value="${state.search}" style="flex:1;max-width:320px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;font-size:12px" />
-        <div><button class="btn-sec" style="background:var(--surface);border:1px solid var(--line);padding:7px 12px;border-radius:7px;font-size:12px;color:var(--ink-3);cursor:pointer">Exportar CSV</button></div>
+        <div><button class="btn-sec btn-export-csv" style="background:var(--surface);border:1px solid var(--line);padding:7px 12px;border-radius:7px;font-size:12px;color:var(--ink-3);cursor:pointer">Exportar CSV</button></div>
       </div>
       <div class="tbl">
         <div class="thead"><div>ID</div><div>Actividad</div><div>Responsable</div><div>Plazo</div><div>Estado</div><div></div></div>

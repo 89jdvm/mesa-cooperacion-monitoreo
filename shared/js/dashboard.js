@@ -35,7 +35,7 @@ export async function initDashboard({ dataUrl, actorsUrl, logUrl, formUrl, provi
     const today = new Date();
 
     if (state.tab === 'panel') renderPanel(main, { activities, today, provinceLabel });
-    else if (state.tab === 'actividades') renderActividades(main, { activities, today });
+    else if (state.tab === 'actividades') renderActividades(main, { activities, today, provinceLabel });
     else if (state.tab === 'mi-trabajo') renderMiTrabajo(main, { activities, actor, today, formUrl });
     else if (state.tab === 'timeline') renderTimeline(main, { activities, today });
   };

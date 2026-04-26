@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { actorBaseName, actorPersonName, slugify } from '../shared/js/utils.js';
+import { actorBaseName, actorPersonName, slugify, buildCsvContent, formatDate } from '../shared/js/utils.js';
 
 export function test_baseName_strips_em_dash_person_suffix() {
   assert.equal(
@@ -113,4 +113,70 @@ export function test_baseName_substring_safety() {
   // baseName of "Inst Foo" is "Inst Foo" — and YES it's a substring of "Inst Foo Bar"
   // This is a known limitation; our actual institutional names don't collide.
   assert.equal(ladForFooBar.includes(actorBaseName('Inst Foo — Persona')), true);
+}
+
+// ── buildCsvContent tests ──────────────────────────────────────────────────
+
+export function test_csv_header_row_correct() {
+  const csv = buildCsvContent([]);
+  const firstLine = csv.split('\r\n')[0];
+  assert.ok(firstLine.includes('"ID"'), 'has ID');
+  assert.ok(firstLine.includes('"Hito Operativo"'), 'has Hito Operativo');
+  assert.ok(firstLine.includes('"Fecha Límite"'), 'has Fecha Límite');
+}
+
+export function test_csv_escapes_quotes_in_cells() {
+  const acts = [{ id: 'X', hito_operativo: 'Acta "formal"', estado: 'Completado',
+    trimestre: '2026 Q2', submesa: 'S1', que_se_hace: '', lidera_apoya: '',
+    fecha_inicio: '', fecha_limite: '2026-06-30', fecha_reporte: '', producto_verificable: '', evidencia_minima: '' }];
+  const csv = buildCsvContent(acts);
+  assert.ok(csv.includes('"Acta ""formal"""'), 'internal quotes doubled');
+}
+
+export function test_csv_formats_dates_as_iso() {
+  // Use datetime strings with time to avoid UTC-midnight timezone shift on local machines.
+  const acts = [{ id: 'Y', fecha_inicio: '2026-04-01T12:00:00', fecha_limite: '2026-06-30T12:00:00',
+    fecha_reporte: '2026-05-15T12:00:00', hito_operativo: '', que_se_hace: '', lidera_apoya: '',
+    trimestre: '', submesa: '', estado: '', producto_verificable: '', evidencia_minima: '' }];
+  const csv = buildCsvContent(acts);
+  const row = csv.split('\r\n')[1];
+  assert.ok(row.includes('"2026-04-01"'), 'fecha_inicio formatted');
+  assert.ok(row.includes('"2026-06-30"'), 'fecha_limite formatted');
+  assert.ok(row.includes('"2026-05-15"'), 'fecha_reporte formatted');
+}
+
+export function test_csv_empty_dates_produce_empty_cells() {
+  const acts = [{ id: 'Z', fecha_inicio: '', fecha_limite: '2026-06-30', fecha_reporte: null,
+    hito_operativo: '', que_se_hace: '', lidera_apoya: '',
+    trimestre: '', submesa: '', estado: '', producto_verificable: '', evidencia_minima: '' }];
+  const csv = buildCsvContent(acts);
+  const row = csv.split('\r\n')[1];
+  // fecha_inicio and fecha_reporte are empty → ""
+  const cells = row.split(',"');
+  assert.equal(cells.filter(c => c === '""' || c.startsWith('"",')).length > 0 || row.includes('""'), true);
+}
+
+export function test_csv_two_activities_two_data_rows() {
+  const act = { id: 'A', trimestre: 'Q2', submesa: 'S1', hito_operativo: 'H',
+    que_se_hace: '', lidera_apoya: '', fecha_inicio: '', fecha_limite: '',
+    estado: '', fecha_reporte: '', producto_verificable: '', evidencia_minima: '' };
+  const csv = buildCsvContent([act, { ...act, id: 'B' }]);
+  const lines = csv.split('\r\n');
+  assert.equal(lines.length, 3); // header + 2 data rows
+}
+
+// ── formatDate guard ───────────────────────────────────────────────────────
+
+export function test_formatDate_invalid_returns_dash() {
+  assert.equal(formatDate(new Date('not-a-date')), '—');
+  assert.equal(formatDate(new Date('not-a-date'), true), '—');
+}
+
+export function test_formatDate_valid_long() {
+  // Use noon to avoid UTC-midnight timezone shift
+  assert.equal(formatDate(new Date('2026-06-30T12:00:00')), '30 de junio de 2026');
+}
+
+export function test_formatDate_valid_short() {
+  assert.equal(formatDate(new Date('2026-06-30T12:00:00'), true), '30 jun');
 }

@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Informe Q2 2026 — Mesa de Cooperación de Sucumbíos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/css/dashboard.css">
+  <style>
+    /* ── Province override ───────────────────────────────── */
+    :root {
+      --primary: #1e40af;
+      --primary-dark: #1e3a8a;
+      --primary-accent: #3b82f6;
+      --primary-light: #eff6ff;
+    }
+
+    /* ── Layout ──────────────────────────────────────────── */
+    body { background: var(--bg); }
+    .informe-wrap { max-width: 900px; margin: 0 auto; padding: 0 var(--s-4) var(--s-7); }
+
+    /* ── Print-only header ───────────────────────────────── */
+    .print-header { display: none; }
+
+    /* ── Screen header bar ───────────────────────────────── */
+    .informe-topbar {
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary) 60%, var(--primary-accent));
+      color: #fff;
+      padding: var(--s-4) var(--s-6);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--s-3);
+      margin-bottom: var(--s-5);
+    }
+    .informe-topbar .brand-block { display: flex; flex-direction: column; gap: 2px; }
+    .informe-topbar .brand-title { font-weight: 800; font-size: var(--fs-16); letter-spacing: -0.01em; }
+    .informe-topbar .brand-sub { font-size: var(--fs-12); opacity: .8; }
+    .informe-topbar .topbar-actions { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; }
+    .btn-back {
+      background: rgba(255,255,255,0.18);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.35);
+      border-radius: var(--r-sm);
+      padding: 6px 14px;
+      font-size: var(--fs-12);
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: background 0.15s;
+    }
+    .btn-back:hover { background: rgba(255,255,255,0.28); }
+    .btn-print {
+      background: #fff;
+      color: var(--primary-dark);
+      border: none;
+      border-radius: var(--r-sm);
+      padding: 6px 14px;
+      font-size: var(--fs-12);
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .btn-print:hover { background: var(--primary-light); }
+
+    /* ── Hero strip ─────────────────────────────────────── */
+    .hero-strip {
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary) 60%, var(--primary-accent));
+      color: #fff;
+      border-radius: var(--r-xl);
+      padding: var(--s-6) 28px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: var(--s-6);
+      align-items: center;
+      margin-bottom: var(--s-4);
+    }
+    .hero-left { text-align: center; }
+    .hero-pct { font-size: var(--fs-60); font-weight: 800; letter-spacing: -0.04em; line-height: 1; }
+    .hero-pct-label { font-size: var(--fs-11); opacity: .7; text-transform: uppercase; letter-spacing: .1em; margin-top: var(--s-1); }
+    .hero-caption { font-size: var(--fs-14); opacity: .9; margin-top: var(--s-2); font-weight: 500; }
+    .hero-pills { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-top: var(--s-4); }
+    .stat-pill {
+      background: rgba(255,255,255,0.18);
+      border: 1px solid rgba(255,255,255,0.28);
+      border-radius: 20px;
+      padding: 7px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 88px;
+    }
+    .stat-pill.warn { background: rgba(220,38,38,0.35); border-color: rgba(220,38,38,0.5); }
+    .stat-pill .pn { font-size: var(--fs-22); font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; }
+    .stat-pill .pl { font-size: var(--fs-10); opacity: .8; text-transform: uppercase; letter-spacing: .06em; margin-top: 2px; }
+
+    /* ── Section headers ────────────────────────────────── */
+    .section-header {
+      display: flex;
+      align-items: baseline;
+      gap: var(--s-2);
+      margin: var(--s-6) 0 var(--s-4);
+      padding-bottom: var(--s-2);
+      border-bottom: 2px solid var(--primary);
+    }
+    .section-header h2 { font-size: var(--fs-16); font-weight: 700; color: var(--ink); }
+    .section-header .sh-meta { font-size: var(--fs-12); color: var(--muted); margin-left: auto; }
+
+    /* ── Submesa cards ──────────────────────────────────── */
+    .submesa-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--s-3); }
+    .submesa-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--r-lg);
+      padding: var(--s-4);
+      display: flex;
+      flex-direction: column;
+      gap: var(--s-2);
+    }
+    .submesa-card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+    .submesa-tag { font-size: var(--fs-11); font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: .06em; }
+    .submesa-name { font-size: var(--fs-13); font-weight: 600; color: var(--ink); margin-top: 1px; }
+    .submesa-pct-label { font-size: var(--fs-20); font-weight: 800; color: var(--ink); letter-spacing: -0.02em; }
+    .pbar-track { height: 7px; background: var(--line); border-radius: 4px; overflow: hidden; margin-top: 2px; }
+    .pbar-fill { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+    .pbar-fill.green { background: var(--green); }
+    .pbar-fill.amber { background: var(--amber); }
+    .pbar-fill.orange { background: var(--orange); }
+    .submesa-meta { font-size: var(--fs-11); color: var(--muted); margin-top: var(--s-1); }
+    .submesa-next { font-size: var(--fs-11); color: var(--ink-3); margin-top: var(--s-2); padding-top: var(--s-2); border-top: 1px solid var(--line-2); }
+    .submesa-next .next-label { font-size: var(--fs-10); color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 2px; }
+    .submesa-next .next-id { font-size: var(--fs-10); color: var(--primary); font-weight: 600; }
+
+    /* ── Report tables ──────────────────────────────────── */
+    .informe-table { width: 100%; border-collapse: collapse; font-size: var(--fs-12); }
+    .informe-table thead th {
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      padding: 9px 12px;
+      text-align: left;
+      font-size: var(--fs-10);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--muted);
+    }
+    .informe-table tbody td {
+      border: 1px solid var(--line);
+      padding: 9px 12px;
+      vertical-align: top;
+      color: var(--ink-2);
+    }
+    .informe-table tbody tr:nth-child(even) td { background: #fafbfc; }
+    .informe-table tbody tr:hover td { background: var(--primary-light); }
+    .cell-id { font-family: 'JetBrains Mono', monospace; font-size: var(--fs-10); color: var(--primary); font-weight: 600; white-space: nowrap; }
+    .cell-hito { font-weight: 500; color: var(--ink); }
+    .cell-date { white-space: nowrap; font-size: var(--fs-11); }
+    .cell-dias { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--red-ink); white-space: nowrap; }
+
+    /* ── Risk subsections ───────────────────────────────── */
+    .riesgo-subtitle {
+      font-size: var(--fs-13);
+      font-weight: 700;
+      color: var(--ink);
+      margin: var(--s-4) 0 var(--s-2);
+      display: flex;
+      align-items: center;
+      gap: var(--s-2);
+    }
+    .riesgo-subtitle .rs-badge {
+      font-size: var(--fs-10);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .rs-badge.atrasado { background: var(--red-bg); color: var(--red-ink); }
+    .rs-badge.prox { background: var(--yellow-bg); color: var(--yellow-ink); }
+    .empty-ok { display: flex; align-items: center; gap: 7px; font-size: var(--fs-12); color: var(--green-ink); background: var(--green-bg); border-radius: var(--r-sm); padding: 9px 14px; margin-bottom: var(--s-3); }
+
+    /* ── Actividades por submesa (Q2 pending) ────────────── */
+    .sub-group { margin-bottom: var(--s-4); }
+    .sub-group-header {
+      display: flex;
+      align-items: center;
+      gap: var(--s-2);
+      background: var(--line-2);
+      border-radius: var(--r-sm);
+      padding: 7px 12px;
+      margin-bottom: var(--s-2);
+    }
+    .sub-group-header .sg-tag { font-size: var(--fs-11); font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: .06em; }
+    .sub-group-header .sg-name { font-size: var(--fs-12); font-weight: 600; color: var(--ink-2); }
+    .sub-group-header .sg-count { font-size: var(--fs-11); color: var(--muted); margin-left: auto; }
+    .compact-row { display: grid; grid-template-columns: 110px 1fr 110px 90px; gap: var(--s-3); padding: 8px 10px; font-size: var(--fs-12); border-bottom: 1px solid var(--line-2); align-items: center; }
+    .compact-row:last-child { border-bottom: none; }
+    .compact-row:hover { background: #f8fafc; }
+    .compact-row .cr-id { font-family: 'JetBrains Mono', monospace; font-size: var(--fs-10); color: var(--primary); font-weight: 600; }
+    .compact-row .cr-hito { color: var(--ink-2); font-weight: 500; }
+    .compact-row .cr-date { font-size: var(--fs-11); color: var(--muted); white-space: nowrap; }
+
+    /* ── Estado badges (inline) ─────────────────────────── */
+    .est { padding: 2px 7px; border-radius: 4px; font-size: var(--fs-10); font-weight: 700; text-transform: uppercase; letter-spacing: .02em; white-space: nowrap; }
+    .est-completado { background: var(--green-bg); color: var(--green-ink); }
+    .est-progreso { background: var(--blue-bg); color: var(--blue-ink); }
+    .est-atrasado { background: var(--red-bg); color: var(--red-ink); }
+    .est-pendiente { background: var(--yellow-bg); color: var(--yellow-ink); }
+    .est-noiniciado { background: var(--line-2); color: var(--muted); }
+
+    /* ── Footer ─────────────────────────────────────────── */
+    .informe-footer {
+      margin-top: var(--s-7);
+      padding: var(--s-4) 0;
+      border-top: 1px solid var(--line);
+      font-size: var(--fs-11);
+      color: var(--muted);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: var(--s-2);
+    }
+    .informe-footer a { color: var(--primary); text-decoration: none; }
+    .informe-footer a:hover { text-decoration: underline; }
+
+    /* ── Loading state ──────────────────────────────────── */
+    #loading { padding: 60px; text-align: center; color: var(--muted); font-size: var(--fs-14); }
+    #content { display: none; }
+
+    /* ── Print CSS ──────────────────────────────────────── */
+    @media print {
+      @page { size: A4; margin: 18mm 15mm; }
+      body { background: #fff; }
+      .informe-topbar { display: none; }
+      .btn-print { display: none; }
+      .print-header { display: block; padding-bottom: 14px; margin-bottom: 20px; border-bottom: 2px solid #1e40af; }
+      .print-header .ph-title { font-size: 18px; font-weight: 800; color: #1e3a8a; }
+      .print-header .ph-sub { font-size: 12px; color: #475569; margin-top: 3px; }
+      .print-header .ph-date { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+      .informe-wrap { max-width: 210mm; margin: 0; padding: 0; }
+      .hero-strip { background: #1e3a8a !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+      .section-header { border-bottom-color: #1e40af; }
+      .section-5 { page-break-before: always; }
+      .section-6 { page-break-before: always; }
+      .section-7 { page-break-before: always; }
+      .submesa-card { box-shadow: none; border: 1px solid #e5e7eb; }
+      .informe-table tbody tr:hover td { background: transparent; }
+      .compact-row:hover { background: transparent; }
+      a { color: inherit !important; text-decoration: none !important; }
+    }
+
+    /* ── Responsive ─────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .hero-strip { grid-template-columns: 1fr; gap: var(--s-4); }
+      .hero-pct { font-size: 48px; }
+      .submesa-grid { grid-template-columns: 1fr; }
+      .compact-row { grid-template-columns: 90px 1fr; }
+      .compact-row .cr-date, .compact-row .est { display: none; }
+      .informe-table { font-size: var(--fs-11); }
+      .informe-table thead th, .informe-table tbody td { padding: 7px 8px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Print-only header -->
+  <div class="print-header">
+    <div class="ph-title">Informe de Avance — Hoja de Ruta 2026–2028</div>
+    <div class="ph-sub">Mesa de Cooperación de Sucumbíos</div>
+    <div class="ph-date" id="ph-date"></div>
+  </div>
+
+  <!-- Screen header bar -->
+  <div class="informe-topbar screen-only">
+    <div class="brand-block">
+      <div class="brand-title">Mesa de Cooperación de Sucumbíos</div>
+      <div class="brand-sub">Informe Q2 2026 · Hoja de Ruta 2026–2028</div>
+    </div>
+    <div class="topbar-actions">
+      <a class="btn-back" href="index.html">&#8592; Volver al dashboard</a>
+      <button class="btn-print" onclick="window.print()">&#128438; Imprimir / PDF</button>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <div class="informe-wrap">
+    <div id="loading">Cargando datos…</div>
+    <div id="content">
+
+      <!-- Section 3: Hero strip -->
+      <div class="hero-strip">
+        <div class="hero-left">
+          <div class="hero-pct" id="hero-pct">–%</div>
+          <div class="hero-pct-label">Avance general Q2</div>
+        </div>
+        <div class="hero-right">
+          <div class="hero-caption" id="hero-caption"></div>
+          <div class="hero-pills" id="hero-pills"></div>
+        </div>
+      </div>
+
+      <!-- Section 4: Avance por Submesa -->
+      <div class="section-header section-4">
+        <h2>Avance por Submesa</h2>
+        <span class="sh-meta" id="sm-meta"></span>
+      </div>
+      <div class="submesa-grid" id="submesa-grid"></div>
+
+      <!-- Section 5: Actividades completadas y verificadas -->
+      <div class="section-header section-5">
+        <h2>Actividades completadas y verificadas</h2>
+        <span class="sh-meta" id="comp-meta"></span>
+      </div>
+      <div id="completadas-section"></div>
+
+      <!-- Section 6: Actividades en riesgo -->
+      <div class="section-header section-6">
+        <h2>Actividades en riesgo</h2>
+      </div>
+      <div id="riesgo-section"></div>
+
+      <!-- Section 7: Actividades por submesa Q2 pendientes -->
+      <div class="section-header section-7">
+        <h2>Actividades por submesa — Q2 pendientes</h2>
+        <span class="sh-meta" id="pending-meta"></span>
+      </div>
+      <div id="pending-section"></div>
+
+      <!-- Footer -->
+      <div class="informe-footer">
+        <span id="footer-text"></span>
+        <a href="https://89jdvm.github.io/mesa-cooperacion-monitoreo/sucumbios/" target="_blank">Ver dashboard en línea &#8599;</a>
+      </div>
+
+    </div><!-- #content -->
+  </div><!-- .informe-wrap -->
+
+<script>
+(function () {
+  'use strict';
+
+  // ── Helpers ──────────────────────────────────────────────────
+  function escapeHtml(s) {
+    if (s == null) return '';
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    const [y, m, d] = iso.split('-');
+    if (!y || !m || !d) return iso;
+    const months = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    return d + ' ' + months[parseInt(m, 10) - 1] + ' ' + y;
+  }
+
+  function daysBetween(isoA, isoB) {
+    const a = new Date(isoA + 'T00:00:00');
+    const b = new Date(isoB + 'T00:00:00');
+    return Math.round((b - a) / 86400000);
+  }
+
+  function todayIso() {
+    const t = new Date();
+    const y = t.getFullYear();
+    const m = String(t.getMonth() + 1).padStart(2, '0');
+    const d = String(t.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  function fmtGenerated(t) {
+    const months = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    return `Generado: ${t.getDate()} de ${months[t.getMonth()]} de ${t.getFullYear()}`;
+  }
+
+  // ── inferSubmesa ─────────────────────────────────────────────
+  function inferSubmesa(a) {
+    const text = (a.lidera_apoya || '').toLowerCase();
+    if (a.provincia === 'Sucumbíos') {
+      if (text.includes('gestión ambiental')) return 'S1';
+      if (text.includes('corposucumbíos') || text.includes('corposucumbios')) return 'S2';
+      if (text.includes('nacionalidades y turismo')) return 'S3';
+      if (text.includes('sucumbíos solidario') || text.includes('sucumbios solidario')) return 'S4';
+      if (text.includes('planificación') || text.includes('planificacion')) return 'S5';
+    }
+    const m = /\bS(\d+)\b/.exec(a.lidera_apoya || '');
+    if (m) return 'S' + m[1];
+    return 'Mesa';
+  }
+
+  // ── Submesa labels ───────────────────────────────────────────
+  const SUBMESA_LABELS = {
+    S1: 'Gestión Ambiental',
+    S2: 'Agroproductivo',
+    S3: 'Patrimonio Cultural',
+    S4: 'Social',
+    S5: 'Gobernanza',
+    Mesa: 'Mesa (transversal)'
+  };
+  const SUBMESA_ORDER = ['S1', 'S2', 'S3', 'S4', 'S5', 'Mesa'];
+
+  // ── Estado badge ─────────────────────────────────────────────
+  function estadoBadge(estado) {
+    if (!estado) return '';
+    if (estado === 'Completado') return '<span class="est est-completado">Completado</span>';
+    if (estado === 'En progreso') return '<span class="est est-progreso">En progreso</span>';
+    if (estado === 'Atrasado') return '<span class="est est-atrasado">Atrasado</span>';
+    if (estado.startsWith('Reportada')) return '<span class="est est-pendiente">Pend. verificación</span>';
+    return '<span class="est est-noiniciado">No iniciado</span>';
+  }
+
+  // ── Main logic ───────────────────────────────────────────────
+  async function main() {
+    const today = new Date();
+    const todayStr = todayIso();
+    const Q2_END = '2026-06-30';
+
+    // Set generated date in print header and footer
+    const genText = fmtGenerated(today);
+    document.getElementById('ph-date').textContent = genText;
+
+    let activities;
+    try {
+      const res = await fetch('../data/actividades.json');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      activities = await res.json();
+    } catch (e) {
+      document.getElementById('loading').innerHTML =
+        '<span style="color:var(--red)">Error cargando datos: ' + escapeHtml(e.message) + '</span>';
+      return;
+    }
+
+    // Infer submesa
+    activities.forEach(function (a) {
+      if (!a.submesa || a.submesa === 'Mesa') a.submesa = inferSubmesa(a);
+    });
+
+    // Filter Q2
+    const q2 = activities.filter(function (a) { return a.trimestre === '2026 Q2'; });
+
+    // ── Hero stats ───────────────────────────────────────────
+    const total = q2.length;
+    const completadas = q2.filter(function (a) { return a.estado === 'Completado'; });
+    const enProgreso = q2.filter(function (a) { return a.estado === 'En progreso' || a.estado.startsWith('Reportada'); });
+    const atrasadas = q2.filter(function (a) { return a.estado === 'Atrasado'; });
+    const noIniciadas = q2.filter(function (a) { return a.estado === 'No iniciado'; });
+
+    // Overall pct = completadas / total (count-based, same as panel.js)
+    const avgPct = total > 0 ? Math.round((completadas.length / total) * 100) : 0;
+
+    document.getElementById('hero-pct').textContent = avgPct + '%';
+    document.getElementById('hero-caption').textContent =
+      completadas.length + ' de ' + total + ' actividades completadas y verificadas · Q2 2026';
+
+    document.getElementById('hero-pills').innerHTML = [
+      { n: completadas.length, l: 'Completadas' },
+      { n: enProgreso.length,  l: 'En progreso' },
+      { n: atrasadas.length,   l: 'Atrasadas', warn: true },
+      { n: noIniciadas.length, l: 'Por iniciar' }
+    ].map(function (p) {
+      return '<div class="stat-pill' + (p.warn && p.n > 0 ? ' warn' : '') + '">' +
+        '<span class="pn">' + p.n + '</span>' +
+        '<span class="pl">' + escapeHtml(p.l) + '</span>' +
+        '</div>';
+    }).join('');
+
+    // ── Submesa cards ────────────────────────────────────────
+    document.getElementById('sm-meta').textContent = SUBMESA_ORDER.length + ' submesas · Q2 2026';
+
+    const submesaCards = SUBMESA_ORDER.map(function (key) {
+      const acts = q2.filter(function (a) { return a.submesa === key; });
+      if (acts.length === 0) return '';
+      const doneCount = acts.filter(function (a) { return a.estado === 'Completado'; }).length;
+      const lateCount = acts.filter(function (a) { return a.estado === 'Atrasado'; }).length;
+      const pct = acts.length ? Math.round((doneCount / acts.length) * 100) : 0;
+      const barClass = pct >= 60 ? 'green' : pct >= 30 ? 'amber' : 'orange';
+
+      // Next pending
+      const pending = acts
+        .filter(function (a) { return a.estado !== 'Completado' && a.fecha_limite; })
+        .sort(function (a, b) { return a.fecha_limite.localeCompare(b.fecha_limite); });
+      const next = pending[0];
+
+      return '<div class="submesa-card">' +
+        '<div class="submesa-card-header">' +
+          '<div>' +
+            '<div class="submesa-tag">' + escapeHtml(key) + '</div>' +
+            '<div class="submesa-name">' + escapeHtml(SUBMESA_LABELS[key] || key) + '</div>' +
+          '</div>' +
+          '<div class="submesa-pct-label">' + pct + '%</div>' +
+        '</div>' +
+        '<div class="pbar-track"><div class="pbar-fill ' + barClass + '" style="width:' + pct + '%"></div></div>' +
+        '<div class="submesa-meta">' +
+          escapeHtml(doneCount + ' de ' + acts.length + ' actividades') +
+          (lateCount > 0 ? ' · <span style="color:var(--red-ink);font-weight:600;">' + lateCount + ' atrasada' + (lateCount > 1 ? 's' : '') + '</span>' : '') +
+        '</div>' +
+        (next
+          ? '<div class="submesa-next">' +
+              '<div class="next-label">Próximo vencimiento pendiente</div>' +
+              '<div><span class="next-id">' + escapeHtml(next.id) + '</span> · ' +
+              escapeHtml(next.hito_operativo ? next.hito_operativo.substring(0, 60) + (next.hito_operativo.length > 60 ? '…' : '') : '—') +
+              ' <span style="color:var(--muted)">· ' + fmtDate(next.fecha_limite) + '</span></div>' +
+            '</div>'
+          : '') +
+        '</div>';
+    }).join('');
+
+    document.getElementById('submesa-grid').innerHTML = submesaCards ||
+      '<p style="color:var(--muted);font-size:var(--fs-13)">Sin actividades Q2 por submesa.</p>';
+
+    // ── Completadas y verificadas ────────────────────────────
+    document.getElementById('comp-meta').textContent = completadas.length + ' actividades · verificadas por ST';
+
+    if (completadas.length === 0) {
+      document.getElementById('completadas-section').innerHTML =
+        '<p style="color:var(--muted);font-size:var(--fs-13);padding:var(--s-3) 0;">No hay actividades completadas en este período.</p>';
+    } else {
+      const sorted = completadas.slice().sort(function (a, b) {
+        const fa = a.fecha_reporte || '';
+        const fb = b.fecha_reporte || '';
+        if (fa !== fb) return fb.localeCompare(fa); // most recent first
+        return (a.fecha_limite || '').localeCompare(b.fecha_limite || '');
+      });
+
+      const rows = sorted.map(function (a) {
+        return '<tr>' +
+          '<td class="cell-id">' + escapeHtml(a.id) + '</td>' +
+          '<td class="cell-hito">' + escapeHtml(a.hito_operativo || '—') + '</td>' +
+          '<td>' + escapeHtml(a.lidera_apoya || '—') + '</td>' +
+          '<td class="cell-date">' + fmtDate(a.fecha_limite) + '</td>' +
+          '<td class="cell-date">' + fmtDate(a.fecha_reporte) + '</td>' +
+          '</tr>';
+      }).join('');
+
+      document.getElementById('completadas-section').innerHTML =
+        '<table class="informe-table"><thead><tr>' +
+          '<th>ID</th><th>Hito operativo</th><th>Responsable / Apoya</th><th>Plazo</th><th>Reportada</th>' +
+        '</tr></thead><tbody>' + rows + '</tbody></table>';
+    }
+
+    // ── Actividades en riesgo ────────────────────────────────
+    const atrasadasList = q2.filter(function (a) { return a.estado === 'Atrasado'; })
+      .sort(function (a, b) { return (a.fecha_limite || '').localeCompare(b.fecha_limite || ''); });
+
+    // Vencen en Q2: non-completed, fecha_limite <= Q2_END, sorted by fecha_limite
+    const proxQ2 = q2.filter(function (a) {
+      return a.estado !== 'Completado' &&
+             a.fecha_limite &&
+             a.fecha_limite <= Q2_END;
+    }).sort(function (a, b) { return a.fecha_limite.localeCompare(b.fecha_limite); });
+
+    let riesgoHtml = '';
+
+    // Subsection: Atrasadas
+    riesgoHtml += '<div class="riesgo-subtitle">Atrasadas <span class="rs-badge atrasado">' +
+      atrasadasList.length + '</span></div>';
+
+    if (atrasadasList.length === 0) {
+      riesgoHtml += '<div class="empty-ok">&#10003; Sin actividades en esta categoría</div>';
+    } else {
+      const rowsA = atrasadasList.map(function (a) {
+        const dias = todayStr > (a.fecha_limite || '') && a.fecha_limite
+          ? daysBetween(a.fecha_limite, todayStr)
+          : 0;
+        return '<tr>' +
+          '<td class="cell-id">' + escapeHtml(a.id) + '</td>' +
+          '<td class="cell-hito">' + escapeHtml(a.hito_operativo || '—') + '</td>' +
+          '<td>' + escapeHtml(a.lidera_apoya || '—') + '</td>' +
+          '<td class="cell-date" style="color:var(--red-ink)">' + fmtDate(a.fecha_limite) + '</td>' +
+          '<td class="cell-dias">' + (dias > 0 ? '+' + dias + ' días' : '—') + '</td>' +
+          '</tr>';
+      }).join('');
+      riesgoHtml +=
+        '<table class="informe-table" style="margin-bottom:var(--s-4)"><thead><tr>' +
+          '<th>ID</th><th>Hito operativo</th><th>Responsable / Apoya</th><th>Venció</th><th>Días vencida</th>' +
+        '</tr></thead><tbody>' + rowsA + '</tbody></table>';
+    }
+
+    // Subsection: Vencen en Q2
+    riesgoHtml += '<div class="riesgo-subtitle">Vencen en Q2 — próximos 60 días <span class="rs-badge prox">' +
+      proxQ2.length + '</span></div>';
+
+    if (proxQ2.length === 0) {
+      riesgoHtml += '<div class="empty-ok">&#10003; Sin actividades en esta categoría</div>';
+    } else {
+      const rowsP = proxQ2.map(function (a) {
+        const diasLeft = a.fecha_limite ? daysBetween(todayStr, a.fecha_limite) : null;
+        return '<tr>' +
+          '<td class="cell-id">' + escapeHtml(a.id) + '</td>' +
+          '<td class="cell-hito">' + escapeHtml(a.hito_operativo || '—') + '</td>' +
+          '<td>' + escapeHtml(a.lidera_apoya || '—') + '</td>' +
+          '<td class="cell-date">' + fmtDate(a.fecha_limite) + '</td>' +
+          '<td>' + estadoBadge(a.estado) + '</td>' +
+          '</tr>';
+      }).join('');
+      riesgoHtml +=
+        '<table class="informe-table"><thead><tr>' +
+          '<th>ID</th><th>Hito operativo</th><th>Responsable / Apoya</th><th>Vence</th><th>Estado</th>' +
+        '</tr></thead><tbody>' + rowsP + '</tbody></table>';
+    }
+
+    document.getElementById('riesgo-section').innerHTML = riesgoHtml;
+
+    // ── Actividades por submesa Q2 pendientes ────────────────
+    const q2Pending = q2.filter(function (a) { return a.estado !== 'Completado'; });
+    document.getElementById('pending-meta').textContent =
+      q2Pending.length + ' actividades pendientes';
+
+    const pendingHtml = SUBMESA_ORDER.map(function (key) {
+      const acts = q2Pending.filter(function (a) { return a.submesa === key; });
+      if (acts.length === 0) return '';
+
+      const rows = acts.map(function (a) {
+        return '<div class="compact-row">' +
+          '<span class="cr-id">' + escapeHtml(a.id) + '</span>' +
+          '<span class="cr-hito">' + escapeHtml(a.hito_operativo || '—') + '</span>' +
+          '<span class="cr-date">' + fmtDate(a.fecha_limite) + '</span>' +
+          estadoBadge(a.estado) +
+          '</div>';
+      }).join('');
+
+      return '<div class="sub-group">' +
+        '<div class="sub-group-header">' +
+          '<span class="sg-tag">' + escapeHtml(key) + '</span>' +
+          '<span class="sg-name">' + escapeHtml(SUBMESA_LABELS[key] || key) + '</span>' +
+          '<span class="sg-count">' + acts.length + ' pendiente' + (acts.length > 1 ? 's' : '') + '</span>' +
+        '</div>' +
+        rows +
+        '</div>';
+    }).join('');
+
+    document.getElementById('pending-section').innerHTML = pendingHtml ||
+      '<p style="color:var(--muted);font-size:var(--fs-13)">Sin actividades pendientes en Q2.</p>';
+
+    // ── Footer ───────────────────────────────────────────────
+    document.getElementById('footer-text').textContent =
+      'Datos generados desde el sistema de monitoreo de la Hoja de Ruta 2026–2028 · Mesa de Cooperación de Sucumbíos · ' + genText;
+
+    // Show content
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+  }
+
+  main();
+})();
+</script>
+</body>
+</html>
