@@ -89,7 +89,7 @@ async function loadActors(url, province) {
   }).filter(a => a.provincia === province);
 }
 
-function inferSubmesa(a) {
+export function inferSubmesa(a) {
   const text = (a.lidera_apoya || '').toLowerCase();
 
   // Orellana submesas
