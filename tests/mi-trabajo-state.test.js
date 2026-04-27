@@ -41,3 +41,24 @@ export function test_state_B_default_on_track() {
   ];
   assert.equal(determineState(me, today, { rankInPodio: 4 }), 'B');
 }
+
+export function test_state_B_with_single_atrasada() {
+  // One Atrasado/Rechazado alone is not enough to trigger state C.
+  // Threshold is >= 2.
+  const me = [
+    make({ estado: 'Atrasado', fecha_limite: '2026-04-01' }),
+    make({ estado: 'En progreso', fecha_limite: '2026-05-01' }),
+    make({ estado: 'Completado', fecha_reporte: '2026-04-10', fecha_limite: '2026-04-12' })
+  ];
+  assert.equal(determineState(me, today, { rankInPodio: null }), 'B');
+}
+
+export function test_state_C_treats_rechazado_same_as_atrasado() {
+  // Rechazado counts toward the atrasadas >= 2 threshold just like Atrasado.
+  const me = [
+    make({ estado: 'Atrasado', fecha_limite: '2026-04-01' }),
+    make({ estado: 'Rechazado', fecha_limite: '2026-04-03' }),
+    make({ estado: 'En progreso', fecha_limite: '2026-05-01' })
+  ];
+  assert.equal(determineState(me, today, { rankInPodio: null }), 'C');
+}

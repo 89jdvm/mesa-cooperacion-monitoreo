@@ -43,3 +43,19 @@ export function test_blocker_of_others_boosts_score() {
   const blocker = scoreActivity(make({ fecha_limite: '2026-04-20', bloqueaOtras: true }), today);
   assert.ok(blocker > plain);
 }
+
+export function test_atrasado_estado_scores_like_en_progreso() {
+  // 'Atrasado' is NOT in EXCLUDED_STATES, so it scores.
+  // Same date, both overdue by 5 days → same formula output.
+  const late = make({ estado: 'Atrasado', fecha_limite: '2026-04-08' }); // -5 days
+  const prog = make({ estado: 'En progreso', fecha_limite: '2026-04-08' }); // -5 days
+  assert.equal(scoreActivity(late, today), scoreActivity(prog, today));
+}
+
+export function test_urgente_flag_does_not_affect_score() {
+  // The `urgente` field in the JSON is a boolean marker but scoreActivity()
+  // does not read it — only `bloqueaOtras` triggers the bonus.
+  const plain   = scoreActivity(make({ fecha_limite: '2026-04-20' }), today);
+  const urgente = scoreActivity(make({ fecha_limite: '2026-04-20', urgente: true }), today);
+  assert.equal(urgente, plain);
+}
