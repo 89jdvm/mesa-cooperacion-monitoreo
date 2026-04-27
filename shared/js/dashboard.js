@@ -71,7 +71,14 @@ export async function initDashboard({ dataUrl, actorsUrl, logUrl, formUrl, provi
   });
 
   initActivityModal({ activities, actor, logUrl, formUrl });
-  paint();
+  await paint();
+
+  // Deep-link: open activity modal on first paint only if ?open=<id> is in URL.
+  // Subsequent tab switches do NOT re-open it.
+  const openId = new URLSearchParams(location.search).get('open');
+  if (openId) {
+    window.dispatchEvent(new CustomEvent('open-activity', { detail: { id: openId } }));
+  }
 }
 
 function currentTab() {

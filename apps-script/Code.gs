@@ -95,8 +95,6 @@ function enviarRecordatoriosDiarios() {
     const actores = obtenerActoresParaActividad(ss, actorTexto, provincia);
     if (actores.length === 0) continue;
 
-    const dashUrl = CONFIG.DASHBOARD_URL_SUCUMBIOS;
-
     // 7 días antes
     if (diasRestantes === CONFIG.DIAS_ANTES_RECORDATORIO) {
       actores.forEach(a => {
@@ -104,7 +102,8 @@ function enviarRecordatoriosDiarios() {
           asunto: `📋 Recordatorio: "${actividad}" vence el ${formatDate(fechaLimite)}`,
           cuerpo: generarEmailRecordatorio({
             provincia, actividad, que, producto, evidencia, actorTexto,
-            fechaLimite, diasRestantes, dashUrl,
+            fechaLimite, diasRestantes,
+            dashUrl: getDashUrlForActor(provincia, a.slug, a.token, id),
             formUrl: getFormUrl(id, a.slug, a.token),
             tipo: 'recordatorio'
           })
@@ -120,7 +119,8 @@ function enviarRecordatoriosDiarios() {
           asunto: `⏰ Hoy vence: "${actividad}" — confirma su estado`,
           cuerpo: generarEmailRecordatorio({
             provincia, actividad, que, producto, evidencia, actorTexto,
-            fechaLimite, diasRestantes, dashUrl,
+            fechaLimite, diasRestantes,
+            dashUrl: getDashUrlForActor(provincia, a.slug, a.token, id),
             formUrl: getFormUrl(id, a.slug, a.token),
             tipo: 'vencimiento'
           })
@@ -138,7 +138,8 @@ function enviarRecordatoriosDiarios() {
           asunto: `📌 Actividad pendiente: "${actividad}" — ${Math.abs(diasRestantes)} días de atraso`,
           cuerpo: generarEmailRecordatorio({
             provincia, actividad, que, producto, evidencia, actorTexto,
-            fechaLimite, diasRestantes, dashUrl,
+            fechaLimite, diasRestantes,
+            dashUrl: getDashUrlForActor(provincia, a.slug, a.token, id),
             formUrl: getFormUrl(id, a.slug, a.token),
             tipo: 'atraso_warning'
           })
@@ -162,7 +163,8 @@ function enviarRecordatoriosDiarios() {
           asunto: `🔴 Escalación: "${actividad}" — ${Math.abs(diasRestantes)} días de atraso`,
           cuerpo: generarEmailRecordatorio({
             provincia, actividad, que, producto, evidencia, actorTexto,
-            fechaLimite, diasRestantes, dashUrl,
+            fechaLimite, diasRestantes,
+            dashUrl: getDashUrlForActor(provincia, a.slug, a.token, id),
             formUrl: getFormUrl(id, a.slug, a.token),
             tipo: 'escalacion'
           })
@@ -1175,11 +1177,13 @@ function getFormUrl(id, actorSlug, token) {
 }
 
 // Build a personalized dashboard URL for a specific actor slug + token.
-function getDashUrlForActor(provincia, actorSlug, token) {
+function getDashUrlForActor(provincia, actorSlug, token, openId) {
   const base = CONFIG.DASHBOARD_URL_SUCUMBIOS;
   if (!actorSlug || !token) return base;
-  const sep = base.includes('?') ? '&' : '?';
-  return base + sep + 'actor=' + encodeURIComponent(actorSlug) + '&token=' + encodeURIComponent(token) + '#mi-trabajo';
+  let url = base + '?actor=' + encodeURIComponent(actorSlug) + '&token=' + encodeURIComponent(token);
+  if (openId) url += '&open=' + encodeURIComponent(openId);
+  url += '#mi-trabajo';
+  return url;
 }
 
 // Slugify identical to dashboard's shared/js/utils.js:slugify.
