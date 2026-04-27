@@ -731,28 +731,93 @@ function procesarRespuesta(data) {
       // distinto en CSV), buscar por rol como fallback.
       const stRecipients = stActores.length > 0 ? stActores : obtenerActoresST(ss, provincia);
       stRecipients.forEach(st => {
-        const tipo = data.bloqueador ? 'situación reportada' : 'completada';
+        const esBloqueador = !!data.bloqueador;
+        const colorBarra = esBloqueador ? '#ea580c' : '#16a34a';
+        const encabezado = esBloqueador ? 'Situación reportada por el responsable' : 'Actividad completada — pendiente verificación';
+        const mensaje = esBloqueador
+          ? 'El responsable ha reportado una <strong>situación que impide avanzar</strong> con esta actividad. Revisa los detalles y coordina el seguimiento.'
+          : 'El responsable ha confirmado la ejecución de esta actividad. Por favor <strong>verifica la evidencia</strong> y aprueba o devuelve para más información.';
         const verifyUrl = getFormUrl(data.id, st.slug, st.token) + '&action=verify';
         const rejectUrl = getFormUrl(data.id, st.slug, st.token) + '&action=reject';
-        enviarEmail([st.email], {
-          asunto: `📝 Actividad ${tipo}: "${datos[i][colIndices.hito_operativo]}" (${data.id})`,
-          cuerpo: `<div style="font-family:Inter,sans-serif;padding:20px;max-width:560px">
-            <h3 style="margin-top:0">Se ha reportado una actividad como <strong>${tipo}</strong></h3>
-            <p><strong>ID:</strong> ${data.id}</p>
-            <p><strong>Actividad:</strong> ${datos[i][colIndices.hito_operativo]}</p>
-            <p><strong>Producto esperado:</strong> ${datos[i][colIndices.producto_verificable] || '—'}</p>
-            <p><strong>Evidencia mínima esperada:</strong> ${datos[i][colIndices.evidencia_minima] || '—'}</p>
-            ${data.evidencia ? `<p><strong>Evidencia recibida:</strong> <a href="${data.evidencia}">${data.evidencia}</a></p>` : ''}
-            ${data.notas ? `<p><strong>Notas del reportante:</strong> ${data.notas}</p>` : ''}
-            ${!data.bloqueador ? `
-            <div style="margin-top:24px;display:flex;gap:8px">
-              <a href="${verifyUrl}" style="background:#16a34a;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">✓ Verificar</a>
-              <a href="${rejectUrl}" style="background:#fff;color:#b45309;border:1px solid #d97706;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">✗ Pedir más info</a>
+        const hitoNombre = datos[i][colIndices.hito_operativo];
+        const producto = datos[i][colIndices.producto_verificable] || '—';
+        const evidenciaMinima = datos[i][colIndices.evidencia_minima] || '—';
+
+        const cuerpo = `
+          <div style="font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;max-width:600px;margin:0 auto;background:#fff;">
+            <div style="background:${colorBarra};padding:4px 0;"></div>
+            <div style="padding:32px;border:1px solid #e2e8f0;border-top:none;">
+              <div style="text-align:center;margin-bottom:24px;">
+                <div style="font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;">
+                  Mesa de Cooperación — ${provincia}
+                </div>
+                <div style="font-size:20px;font-weight:700;color:#0f172a;margin-top:8px;">${encabezado}</div>
+              </div>
+
+              <p style="font-size:15px;color:#334155;line-height:1.6;margin-bottom:24px;">
+                Estimada Secretaría Técnica,<br><br>${mensaje}
+              </p>
+
+              <div style="background:#f8fafc;border-radius:8px;padding:20px;margin-bottom:24px;">
+                <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:4px;">ID</div>
+                <div style="font-size:13px;font-family:monospace;color:#2563eb;margin-bottom:16px;font-weight:600;">${data.id}</div>
+
+                <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:4px;">Actividad</div>
+                <div style="font-size:16px;font-weight:600;color:#0f172a;margin-bottom:16px;">${hitoNombre}</div>
+
+                <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:${esBloqueador || data.evidencia ? '16px' : '0'};">
+                  <div>
+                    <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:4px;">Producto esperado</div>
+                    <div style="font-size:13px;color:#334155;">${producto}</div>
+                  </div>
+                  <div>
+                    <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:4px;">Evidencia requerida</div>
+                    <div style="font-size:13px;color:#334155;">${evidenciaMinima}</div>
+                  </div>
+                </div>
+
+                ${data.evidencia ? `
+                <div style="padding-top:16px;border-top:1px solid #e2e8f0;">
+                  <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:4px;">Evidencia recibida</div>
+                  <a href="${data.evidencia}" style="font-size:13px;color:#2563eb;word-break:break-all;">${data.evidencia}</a>
+                </div>` : ''}
+
+                ${esBloqueador && data.notas ? `
+                <div style="margin-top:16px;padding:14px;background:#fff7ed;border-radius:6px;border-left:3px solid #ea580c;">
+                  <div style="font-size:11px;font-weight:700;color:#9a3412;text-transform:uppercase;margin-bottom:6px;">Situación reportada</div>
+                  <div style="font-size:14px;color:#431407;line-height:1.5;">${data.notas}</div>
+                </div>` : ''}
+
+                ${!esBloqueador && data.notas ? `
+                <div style="margin-top:16px;padding-top:16px;border-top:1px solid #e2e8f0;">
+                  <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:4px;">Notas del responsable</div>
+                  <div style="font-size:13px;color:#334155;">${data.notas}</div>
+                </div>` : ''}
+              </div>
+
+              ${!esBloqueador ? `
+              <div style="text-align:center;margin-bottom:16px;">
+                <a href="${verifyUrl}" style="display:inline-block;background:#16a34a;color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px;margin-right:10px;">
+                  ✓ Verificar y publicar
+                </a>
+                <a href="${rejectUrl}" style="display:inline-block;background:#fff;color:#b45309;border:1px solid #d97706;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px;">
+                  ✗ Pedir más información
+                </a>
+              </div>
+              <p style="text-align:center;font-size:11px;color:#9ca3af;margin-bottom:24px;">
+                "Verificar" marca la actividad como completada y la muestra en el informe público. "Pedir más info" la devuelve al responsable.
+              </p>` : ''}
             </div>
-            <p style="font-size:11px;color:#94a3b8;margin-top:14px">Verificar marca la actividad como completada y la publica en el dashboard. Pedir más info la devuelve al responsable.</p>
-            ` : ''}
-          </div>`
-        });
+            <div style="padding:16px;text-align:center;font-size:11px;color:#9ca3af;">
+              Notificación automática · Mesa de Cooperación de ${provincia}
+            </div>
+          </div>`;
+
+        const asunto = esBloqueador
+          ? `[Situación] ${hitoNombre} (${data.id})`
+          : `[Para verificar] ${hitoNombre} (${data.id})`;
+
+        enviarEmail([st.email], { asunto, cuerpo });
       });
 
       return;
