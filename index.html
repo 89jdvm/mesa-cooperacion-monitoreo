@@ -225,14 +225,16 @@
         <div class="subtitle">Mesa coordinada por la Secretaría Técnica (GADPO) con 3 submesas temáticas.</div>
 
         <div class="stats">
-          <div class="stat"><div class="n orellana-n">79</div><div class="l">Actividades</div></div>
-          <div class="stat"><div class="n orellana-n">3</div><div class="l">Submesas</div></div>
-          <div class="stat"><div class="n orellana-n">8</div><div class="l">Trimestres</div></div>
+          <div class="stat"><div class="n orellana-n" id="orl-total">79</div><div class="l">Actividades</div></div>
+          <div class="stat"><div class="n orellana-n" id="orl-pct">—%</div><div class="l">Completadas</div></div>
+          <div class="stat"><div class="n orellana-n" id="orl-late" style="color:var(--red,#dc2626)">—</div><div class="l">Atrasadas</div></div>
         </div>
 
         <div class="submesas">
           <b>S1</b> · Ambiente &nbsp;·&nbsp; <b>S2</b> · Social e Infraestructura &nbsp;·&nbsp; <b>S3</b> · Desarrollo Económico
         </div>
+
+        <div class="submesas" id="orl-updated" style="padding-top:10px;border-top:1px solid var(--line-2)"></div>
 
         <div class="cta">
           <span>Abrir panel de Orellana</span>
@@ -246,14 +248,16 @@
         <div class="subtitle">Mesa coordinada por la Secretaría Técnica (GADPS) con 5 submesas temáticas.</div>
 
         <div class="stats">
-          <div class="stat"><div class="n sucumbios-n">93</div><div class="l">Actividades</div></div>
-          <div class="stat"><div class="n sucumbios-n">5</div><div class="l">Submesas</div></div>
-          <div class="stat"><div class="n sucumbios-n">8</div><div class="l">Trimestres</div></div>
+          <div class="stat"><div class="n sucumbios-n" id="suc-total">93</div><div class="l">Actividades</div></div>
+          <div class="stat"><div class="n sucumbios-n" id="suc-pct">—%</div><div class="l">Completadas</div></div>
+          <div class="stat"><div class="n sucumbios-n" id="suc-late" style="color:var(--red,#dc2626)">—</div><div class="l">Atrasadas</div></div>
         </div>
 
         <div class="submesas">
           <b>S1</b> · Ambiental &nbsp;·&nbsp; <b>S2</b> · Agroproductivo &nbsp;·&nbsp; <b>S3</b> · Patrimonio &nbsp;·&nbsp; <b>S4</b> · Social &nbsp;·&nbsp; <b>S5</b> · Gobernanza
         </div>
+
+        <div class="submesas" id="suc-updated" style="padding-top:10px;border-top:1px solid var(--line-2)"></div>
 
         <div class="cta">
           <span>Abrir panel de Sucumbíos</span>
@@ -268,6 +272,47 @@
       Contrato N.° 6011904 · Fundación Conservación Internacional Ecuador · Consultoría de acompañamiento técnico para la conformación de las Mesas de Cooperación
     </div>
   </div>
+
+  <script type="module">
+    const MESES_CORTOS = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    function fmtShort(iso) {
+      if (!iso) return null;
+      const d = new Date(iso + 'T12:00:00');
+      if (isNaN(d)) return null;
+      return d.getDate() + ' ' + MESES_CORTOS[d.getMonth()] + ' ' + d.getFullYear();
+    }
+    function calcStats(acts) {
+      const total = acts.length;
+      const done  = acts.filter(a => a.estado === 'Completado').length;
+      const late  = acts.filter(a => a.estado === 'Atrasado').length;
+      const pct   = total > 0 ? Math.round((done / total) * 100) : 0;
+      const lastReport = acts
+        .map(a => a.fecha_reporte).filter(Boolean)
+        .sort().at(-1);
+      return { total, pct, late, lastReport };
+    }
+    function inject(prefix, stats) {
+      const q = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+      q(prefix + '-total', stats.total);
+      q(prefix + '-pct',   stats.pct + '%');
+      q(prefix + '-late',  stats.late);
+      const upd = document.getElementById(prefix + '-updated');
+      if (upd) {
+        const d = fmtShort(stats.lastReport);
+        upd.textContent = d ? 'Actualizado: ' + d : '';
+      }
+    }
+    try {
+      const [suc, orl] = await Promise.all([
+        fetch('sucumbios/data/actividades.json').then(r => r.json()),
+        fetch('orellana/data/actividades.json').then(r => r.json())
+      ]);
+      inject('suc', calcStats(suc));
+      inject('orl', calcStats(orl));
+    } catch (e) {
+      // Silently fall back to hardcoded values already in HTML
+    }
+  </script>
 
 </body>
 </html>
