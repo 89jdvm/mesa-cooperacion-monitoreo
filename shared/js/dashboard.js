@@ -5,10 +5,11 @@ import { renderPanel } from './panel.js';
 import { renderActividades } from './actividades.js';
 import { renderMiTrabajo } from './mi-trabajo.js';
 import { renderTimeline } from './timeline.js';
+import { renderInforme } from './informe.js';
 import { initActivityModal } from './activity-modal.js';
 import { fetchJSON, slugify } from './utils.js';
 
-const TABS = ['panel', 'actividades', 'mi-trabajo', 'timeline'];
+const TABS = ['panel', 'actividades', 'mi-trabajo', 'timeline', 'informe'];
 
 export async function initDashboard({ dataUrl, actorsUrl, logUrl, formUrl, province, provinceLabel }) {
   const app = document.getElementById('app');
@@ -38,6 +39,7 @@ export async function initDashboard({ dataUrl, actorsUrl, logUrl, formUrl, provi
     else if (state.tab === 'actividades') renderActividades(main, { activities, today, provinceLabel });
     else if (state.tab === 'mi-trabajo') renderMiTrabajo(main, { activities, actor, today, formUrl });
     else if (state.tab === 'timeline') renderTimeline(main, { activities, today });
+    else if (state.tab === 'informe') renderInforme(main, { activities, today, provinceLabel });
   };
 
   app.addEventListener('click', e => {

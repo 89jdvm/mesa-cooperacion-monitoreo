@@ -54,7 +54,8 @@ function renderTabs(activeTab, actor) {
     { key: 'panel', label: 'Panel', requires: null },
     { key: 'actividades', label: 'Actividades', requires: null },
     { key: 'mi-trabajo', label: 'Mi trabajo', requires: 'actor' },
-    { key: 'timeline', label: 'Línea de Tiempo', requires: null }
+    { key: 'timeline', label: 'Línea de Tiempo', requires: null },
+    { key: 'informe', label: 'Informe', requires: null }
   ];
   const visible = allTabs.filter(t => !t.requires || (t.requires === 'actor' && actor));
   el.innerHTML = visible.map(t =>
