@@ -1177,6 +1177,7 @@ function getFormUrl(id, actorSlug, token) {
 }
 
 // Build a personalized dashboard URL for a specific actor slug + token.
+// Assumes CONFIG.DASHBOARD_URL_SUCUMBIOS has no existing query string.
 function getDashUrlForActor(provincia, actorSlug, token, openId) {
   const base = CONFIG.DASHBOARD_URL_SUCUMBIOS;
   if (!actorSlug || !token) return base;
