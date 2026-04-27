@@ -21,7 +21,8 @@ const SUBMESA_LABELS_BY_PROVINCE = {
 export function computeInformeStats(activities) {
   const total = activities.length;
   const completadas = activities.filter(a => a.estado === 'Completado');
-  const atrasadas   = activities.filter(a => a.estado === 'Atrasado');
+  // Rechazado is bucketed with Atrasado: ST returned it and the actor must redo.
+  const atrasadas   = activities.filter(a => a.estado === 'Atrasado' || a.estado === 'Rechazado');
   const enProgreso  = activities.filter(a =>
     a.estado === 'En progreso' || a.estado.startsWith('Reportada')
   );
@@ -36,9 +37,10 @@ export function computeInformeStats(activities) {
     completadasBySubmesa[key].push(a);
   }
 
-  // Risk: overdue or has a blocker note
+  // Risk: overdue, returned by ST, or has a blocker note
   const riesgo = activities.filter(a =>
-    a.estado === 'Atrasado' || (a.notas_bloqueador && a.notas_bloqueador.trim())
+    a.estado === 'Atrasado' || a.estado === 'Rechazado' ||
+    (a.notas_bloqueador && a.notas_bloqueador.trim())
   );
 
   return { total, completadas, atrasadas, enProgreso, noIniciadas, pct, completadasBySubmesa, riesgo };

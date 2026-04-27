@@ -44,3 +44,22 @@ export function test_riesgo_includes_atrasado_and_notas_bloqueador() {
   assert.ok(riesgoIds.includes('bloq'));
   assert.ok(!riesgoIds.includes('ok'));
 }
+
+export function test_rechazado_counts_with_atrasadas_and_in_riesgo() {
+  // Rechazado activities are returned by ST and need redo — bucket them
+  // with atrasadas so the hero pills sum to total, and surface them in riesgo.
+  const acts = [
+    act({ id: 'A', estado: 'Completado' }),
+    act({ id: 'B', estado: 'Rechazado' }),
+    act({ id: 'C', estado: 'Atrasado' }),
+    act({ id: 'D', estado: 'En progreso' })
+  ];
+  const stats = computeInformeStats(acts);
+  assert.equal(stats.atrasadas.length, 2, 'Rechazado should count with Atrasado');
+  assert.equal(
+    stats.completadas.length + stats.atrasadas.length + stats.enProgreso.length + stats.noIniciadas.length,
+    stats.total,
+    'every estado must land in exactly one bucket'
+  );
+  assert.ok(stats.riesgo.find(a => a.id === 'B'), 'Rechazado must appear in riesgo');
+}

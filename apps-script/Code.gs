@@ -985,7 +985,8 @@ function procesarRechazo(data) {
     // Notificar a los actores responsables
     const reportantes = obtenerActoresParaActividad(ss, lideraApoya, provincia);
     reportantes.forEach(r => {
-      const dashUrl = getDashUrlForActor(provincia, r.slug, r.token);
+      // Pass data.id so the email link opens the rejected activity directly.
+      const dashUrl = getDashUrlForActor(provincia, r.slug, r.token, data.id);
       enviarEmail([r.email], {
         asunto: `↩ Reporte devuelto: "${actividad}" (${data.id})`,
         cuerpo: `<div style="font-family:Inter,sans-serif;padding:20px;max-width:560px">
