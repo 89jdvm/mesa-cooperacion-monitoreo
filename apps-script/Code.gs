@@ -150,7 +150,13 @@ function enviarRecordatoriosDiarios() {
       if (emailsST.length) {
         enviarEmail(emailsST, {
           asunto: `[ST] Atraso 3 días: "${actividad}" en ${provincia}`,
-          cuerpo: `<p>La actividad <strong>${actividad}</strong> (${id}) está atrasada 3 días. Asignada a: ${actorTexto}.</p>`
+          cuerpo: generarEmailInstitucional({
+            provincia, actividad, id, actorTexto, fechaLimite,
+            diasAtraso: 3,
+            severity: 'warning',
+            encabezado: 'Actividad atrasada — 3 días',
+            mensaje: `Una actividad bajo seguimiento de la Mesa lleva <strong>3 días de atraso</strong>. El responsable ya recibió un aviso por email; este es un FYI a la Secretaría Técnica para coordinar seguimiento si fuera necesario.`,
+          })
         });
       }
       registrarLog(ss, id, provincia, 'Advertencia atraso (3 días)', actores.map(a => a.email).join(', '));
@@ -176,7 +182,13 @@ function enviarRecordatoriosDiarios() {
       if (escalados.length) {
         enviarEmail(escalados, {
           asunto: `[ESCALACIÓN] "${actividad}" en ${provincia} — 7 días de atraso`,
-          cuerpo: `<p>La actividad <strong>${actividad}</strong> (${id}) está atrasada 7 días. Asignada a: ${actorTexto}. Requiere intervención de la CSE / Presidencia.</p>`
+          cuerpo: generarEmailInstitucional({
+            provincia, actividad, id, actorTexto, fechaLimite,
+            diasAtraso: Math.abs(diasRestantes),
+            severity: 'critical',
+            encabezado: 'Actividad escalada — requiere intervención',
+            mensaje: `Esta actividad lleva <strong>${Math.abs(diasRestantes)} días de atraso</strong> y ha sido escalada a la <strong>CSE y Presidencia de la Mesa</strong>. Los recordatorios al responsable no resolvieron el bloqueo. Se requiere acción institucional.`,
+          })
         });
       }
       registrarLog(ss, id, provincia, 'ESCALACIÓN a CSE/Presidencia', actores.map(a => a.email).join(', '));
@@ -373,16 +385,18 @@ function generarEmailRecordatorio(params) {
           <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:4px;">Qué se debe hacer</div>
           <div style="font-size:14px;color:#334155;margin-bottom:16px;line-height:1.5;">${que}</div>
 
-          <div style="display:flex;gap:24px;flex-wrap:wrap;">
-            <div>
-              <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:4px;">📦 Producto esperado</div>
-              <div style="font-size:13px;color:#334155;">${producto}</div>
-            </div>
-            <div>
-              <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:4px;">📎 Evidencia requerida</div>
-              <div style="font-size:13px;color:#334155;">${evidencia}</div>
-            </div>
-          </div>
+          <table cellpadding="0" cellspacing="0" border="0" style="width:100%;">
+            <tr>
+              <td style="vertical-align:top;padding-right:16px;width:50%;">
+                <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:4px;">📦 Producto esperado</div>
+                <div style="font-size:13px;color:#334155;">${producto}</div>
+              </td>
+              <td style="vertical-align:top;width:50%;">
+                <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:4px;">📎 Evidencia requerida</div>
+                <div style="font-size:13px;color:#334155;">${evidencia}</div>
+              </td>
+            </tr>
+          </table>
 
           <div style="margin-top:16px;padding-top:16px;border-top:1px solid #e2e8f0;">
             <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:4px;">📅 Plazo</div>
@@ -407,6 +421,63 @@ function generarEmailRecordatorio(params) {
       </div>
       <div style="padding:16px;text-align:center;font-size:11px;color:#9ca3af;">
         Este es un mensaje automático del sistema de seguimiento de la Mesa de Cooperación de ${provincia}.
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Email institucional (no-actor) — para ST/CSE/Presidencia.
+ * No lleva botones de acción, solo informa y enlaza al dashboard público.
+ * severity: 'warning' (naranja) | 'critical' (rojo).
+ */
+function generarEmailInstitucional(params) {
+  const { provincia, actividad, id, actorTexto, fechaLimite, diasAtraso,
+          severity, encabezado, mensaje } = params;
+  const colorBarra = severity === 'critical' ? '#dc2626' : '#ea580c';
+  const dashUrl = CONFIG.DASHBOARD_URL_SUCUMBIOS + '?open=' + encodeURIComponent(id);
+  return `
+    <div style="font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;max-width:600px;margin:0 auto;background:#fff;">
+      <div style="background:${colorBarra};padding:4px 0;"></div>
+      <div style="padding:32px;border:1px solid #e2e8f0;border-top:none;">
+        <div style="text-align:center;margin-bottom:24px;">
+          <div style="font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;">
+            Mesa de Cooperación — ${provincia}
+          </div>
+          <div style="font-size:20px;font-weight:700;color:#0f172a;margin-top:8px;">${encabezado}</div>
+        </div>
+
+        <p style="font-size:15px;color:#334155;line-height:1.6;margin-bottom:24px;">${mensaje}</p>
+
+        <div style="background:#f8fafc;border-radius:8px;padding:20px;margin-bottom:24px;">
+          <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:4px;">ID</div>
+          <div style="font-size:13px;font-family:monospace;color:#2563eb;margin-bottom:16px;font-weight:600;">${id}</div>
+
+          <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:4px;">Actividad</div>
+          <div style="font-size:16px;font-weight:600;color:#0f172a;margin-bottom:16px;">${actividad}</div>
+
+          <table cellpadding="0" cellspacing="0" border="0" style="width:100%;border-top:1px solid #e2e8f0;padding-top:16px;">
+            <tr>
+              <td style="vertical-align:top;padding-right:16px;width:50%;">
+                <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:4px;">Responsable</div>
+                <div style="font-size:13px;color:#334155;">${actorTexto}</div>
+              </td>
+              <td style="vertical-align:top;width:50%;">
+                <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:4px;">Plazo</div>
+                <div style="font-size:13px;font-weight:600;color:${colorBarra};">${formatDate(fechaLimite)} (${diasAtraso} días de atraso)</div>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <div style="text-align:center;margin-bottom:16px;">
+          <a href="${dashUrl}" style="display:inline-block;background:#2563eb;color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px;">
+            Ver actividad en el dashboard →
+          </a>
+        </div>
+      </div>
+      <div style="padding:16px;text-align:center;font-size:11px;color:#9ca3af;">
+        Notificación institucional · Mesa de Cooperación de ${provincia}
       </div>
     </div>
   `;
@@ -451,20 +522,22 @@ function generarEmailSemanal(nombre, provincia, actividades, dashUrl) {
           Aquí está el resumen de tus actividades pendientes en la Mesa de Cooperación de ${provincia}:
         </p>
 
-        <div style="background:#f8fafc;border-radius:8px;padding:4px 0;margin-bottom:20px;display:flex;text-align:center;">
-          <div style="flex:1;padding:12px;">
-            <div style="font-size:24px;font-weight:800;color:#dc2626;">${urgentes.length}</div>
-            <div style="font-size:11px;color:#6b7280;">Urgentes</div>
-          </div>
-          <div style="flex:1;padding:12px;">
-            <div style="font-size:24px;font-weight:800;color:#ca8a04;">${proximas.length}</div>
-            <div style="font-size:11px;color:#6b7280;">Próximas</div>
-          </div>
-          <div style="flex:1;padding:12px;">
-            <div style="font-size:24px;font-weight:800;color:#6b7280;">${futuras.length}</div>
-            <div style="font-size:11px;color:#6b7280;">Futuras</div>
-          </div>
-        </div>
+        <table cellpadding="0" cellspacing="0" border="0" style="width:100%;background:#f8fafc;border-radius:8px;margin-bottom:20px;">
+          <tr>
+            <td style="text-align:center;padding:16px 8px;width:33.33%;">
+              <div style="font-size:24px;font-weight:800;color:#dc2626;">${urgentes.length}</div>
+              <div style="font-size:11px;color:#6b7280;">Urgentes</div>
+            </td>
+            <td style="text-align:center;padding:16px 8px;width:33.33%;">
+              <div style="font-size:24px;font-weight:800;color:#ca8a04;">${proximas.length}</div>
+              <div style="font-size:11px;color:#6b7280;">Próximas</div>
+            </td>
+            <td style="text-align:center;padding:16px 8px;width:33.34%;">
+              <div style="font-size:24px;font-weight:800;color:#6b7280;">${futuras.length}</div>
+              <div style="font-size:11px;color:#6b7280;">Futuras</div>
+            </td>
+          </tr>
+        </table>
 
         <table style="width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;border:1px solid #e2e8f0;">
           <tr style="background:#f1f5f9;">
@@ -522,24 +595,26 @@ function generarEmailMensual(provincia, stats) {
       </div>
 
       <div style="padding:32px;border:1px solid #e2e8f0;border-top:none;">
-        <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
-          <div style="flex:1;min-width:120px;background:#dcfce7;border-radius:8px;padding:16px;text-align:center;">
-            <div style="font-size:28px;font-weight:800;color:#16a34a;">${completadas}</div>
-            <div style="font-size:11px;color:#16a34a;font-weight:600;">Completadas</div>
-          </div>
-          <div style="flex:1;min-width:120px;background:#dbeafe;border-radius:8px;padding:16px;text-align:center;">
-            <div style="font-size:28px;font-weight:800;color:#2563eb;">${enProgreso}</div>
-            <div style="font-size:11px;color:#2563eb;font-weight:600;">En progreso</div>
-          </div>
-          <div style="flex:1;min-width:120px;background:#fee2e2;border-radius:8px;padding:16px;text-align:center;">
-            <div style="font-size:28px;font-weight:800;color:#dc2626;">${atrasadas}</div>
-            <div style="font-size:11px;color:#dc2626;font-weight:600;">Atrasadas</div>
-          </div>
-          <div style="flex:1;min-width:120px;background:#f3f4f6;border-radius:8px;padding:16px;text-align:center;">
-            <div style="font-size:28px;font-weight:800;color:#6b7280;">${pendientes}</div>
-            <div style="font-size:11px;color:#6b7280;font-weight:600;">Pendientes</div>
-          </div>
-        </div>
+        <table cellpadding="0" cellspacing="6" border="0" style="width:100%;margin-bottom:18px;">
+          <tr>
+            <td style="background:#dcfce7;border-radius:8px;padding:16px 8px;text-align:center;width:25%;">
+              <div style="font-size:28px;font-weight:800;color:#16a34a;">${completadas}</div>
+              <div style="font-size:11px;color:#16a34a;font-weight:600;">Completadas</div>
+            </td>
+            <td style="background:#dbeafe;border-radius:8px;padding:16px 8px;text-align:center;width:25%;">
+              <div style="font-size:28px;font-weight:800;color:#2563eb;">${enProgreso}</div>
+              <div style="font-size:11px;color:#2563eb;font-weight:600;">En progreso</div>
+            </td>
+            <td style="background:#fee2e2;border-radius:8px;padding:16px 8px;text-align:center;width:25%;">
+              <div style="font-size:28px;font-weight:800;color:#dc2626;">${atrasadas}</div>
+              <div style="font-size:11px;color:#dc2626;font-weight:600;">Atrasadas</div>
+            </td>
+            <td style="background:#f3f4f6;border-radius:8px;padding:16px 8px;text-align:center;width:25%;">
+              <div style="font-size:28px;font-weight:800;color:#6b7280;">${pendientes}</div>
+              <div style="font-size:11px;color:#6b7280;font-weight:600;">Pendientes</div>
+            </td>
+          </tr>
+        </table>
 
         <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;color:#0f172a;">Avance por Actor Responsable</h3>
 
@@ -765,16 +840,18 @@ function procesarRespuesta(data) {
                 <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:4px;">Actividad</div>
                 <div style="font-size:16px;font-weight:600;color:#0f172a;margin-bottom:16px;">${hitoNombre}</div>
 
-                <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:${esBloqueador || data.evidencia ? '16px' : '0'};">
-                  <div>
-                    <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:4px;">Producto esperado</div>
-                    <div style="font-size:13px;color:#334155;">${producto}</div>
-                  </div>
-                  <div>
-                    <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:4px;">Evidencia requerida</div>
-                    <div style="font-size:13px;color:#334155;">${evidenciaMinima}</div>
-                  </div>
-                </div>
+                <table cellpadding="0" cellspacing="0" border="0" style="width:100%;margin-bottom:${esBloqueador || data.evidencia ? '16px' : '0'};">
+                  <tr>
+                    <td style="vertical-align:top;padding-right:16px;width:50%;">
+                      <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:4px;">Producto esperado</div>
+                      <div style="font-size:13px;color:#334155;">${producto}</div>
+                    </td>
+                    <td style="vertical-align:top;width:50%;">
+                      <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:4px;">Evidencia requerida</div>
+                      <div style="font-size:13px;color:#334155;">${evidenciaMinima}</div>
+                    </td>
+                  </tr>
+                </table>
 
                 ${data.evidencia ? `
                 <div style="padding-top:16px;border-top:1px solid #e2e8f0;">
@@ -1053,14 +1130,43 @@ function procesarRechazo(data) {
       // Pass data.id so the email link opens the rejected activity directly.
       const dashUrl = getDashUrlForActor(provincia, r.slug, r.token, data.id);
       enviarEmail([r.email], {
-        asunto: `↩ Reporte devuelto: "${actividad}" (${data.id})`,
-        cuerpo: `<div style="font-family:Inter,sans-serif;padding:20px;max-width:560px">
-          <h3 style="margin-top:0;color:#b45309">La Secretaría Técnica devolvió tu reporte para que lo completes</h3>
-          <p><strong>Actividad:</strong> ${actividad}</p>
-          <p><strong>Motivo:</strong> ${data.motivo}</p>
-          <p style="margin-top:20px"><a href="${dashUrl}" style="background:#1a6b3c;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:700">Abrir mi trabajo</a></p>
-          <p style="font-size:12px;color:#94a3b8;margin-top:14px">Cuando ajustes lo solicitado, vuelve a marcar "Ya la completé" desde tu panel.</p>
-        </div>`
+        asunto: `[Devuelto] ${actividad} (${data.id})`,
+        cuerpo: `
+          <div style="font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;max-width:600px;margin:0 auto;background:#fff;">
+            <div style="background:#ea580c;padding:4px 0;"></div>
+            <div style="padding:32px;border:1px solid #e2e8f0;border-top:none;">
+              <div style="text-align:center;margin-bottom:24px;">
+                <div style="font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;">
+                  Mesa de Cooperación — ${provincia}
+                </div>
+                <div style="font-size:20px;font-weight:700;color:#0f172a;margin-top:8px;">Reporte devuelto para ajustes</div>
+              </div>
+
+              <p style="font-size:15px;color:#334155;line-height:1.6;margin-bottom:24px;">
+                Estimado/a ${r.name || 'responsable'},<br><br>
+                La <strong>Secretaría Técnica</strong> revisó el reporte que enviaste y necesita información adicional o un ajuste antes de marcar la actividad como completada. Cuando ajustes lo solicitado, vuelve a marcar <em>"Ya la completé"</em> desde tu panel.
+              </p>
+
+              <div style="background:#f8fafc;border-radius:8px;padding:20px;margin-bottom:24px;">
+                <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:4px;">Actividad</div>
+                <div style="font-size:16px;font-weight:600;color:#0f172a;margin-bottom:16px;">${actividad}</div>
+
+                <div style="padding:14px;background:#fff7ed;border-radius:6px;border-left:3px solid #ea580c;">
+                  <div style="font-size:11px;font-weight:700;color:#9a3412;text-transform:uppercase;margin-bottom:6px;">Motivo de la devolución</div>
+                  <div style="font-size:14px;color:#431407;line-height:1.5;">${data.motivo}</div>
+                </div>
+              </div>
+
+              <div style="text-align:center;margin-bottom:16px;">
+                <a href="${dashUrl}" style="display:inline-block;background:#16a34a;color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px;">
+                  Abrir mi trabajo →
+                </a>
+              </div>
+            </div>
+            <div style="padding:16px;text-align:center;font-size:11px;color:#9ca3af;">
+              Mesa de Cooperación de ${provincia}
+            </div>
+          </div>`
       });
     });
     return;

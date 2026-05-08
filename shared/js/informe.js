@@ -1,6 +1,10 @@
 // shared/js/informe.js — Live Informe tab
 import { escapeHtml, formatDate, daysBetween } from './utils.js';
 
+// 'Mesa' is the cross-cutting bucket for activities led by the Secretaría
+// Técnica or the Presidencia (governance, coordination, monthly reports).
+// They are not "submesa progress" but they ARE substantive Mesa work, so
+// they get their own card in the Avance + Completadas sections.
 const SUBMESA_LABELS_BY_PROVINCE = {
   'Sucumbíos': {
     S1: 'S1 · Gestión Ambiental',
@@ -8,11 +12,13 @@ const SUBMESA_LABELS_BY_PROVINCE = {
     S3: 'S3 · Patrimonio Cultural',
     S4: 'S4 · Social',
     S5: 'S5 · Gobernanza',
+    Mesa: 'Mesa · Coordinación y gobernanza',
   },
   'Orellana': {
     S1: 'S1 · Gestión Ambiental',
     S2: 'S2 · Nacionalidades',
     S3: 'S3 · Fomento Productivo',
+    Mesa: 'Mesa · Coordinación y gobernanza',
   },
 };
 

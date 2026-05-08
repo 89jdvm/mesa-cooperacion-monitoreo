@@ -225,8 +225,8 @@
         <div class="subtitle">Mesa coordinada por la Secretaría Técnica (GADPO) con 3 submesas temáticas.</div>
 
         <div class="stats">
-          <div class="stat"><div class="n orellana-n" id="orl-total">79</div><div class="l">Actividades</div></div>
-          <div class="stat"><div class="n orellana-n" id="orl-pct">—%</div><div class="l">Completadas</div></div>
+          <div class="stat"><div class="n orellana-n" id="orl-total">…</div><div class="l">Actividades</div></div>
+          <div class="stat"><div class="n orellana-n" id="orl-pct">—</div><div class="l">Completadas</div></div>
           <div class="stat"><div class="n orellana-n" id="orl-late" style="color:var(--red,#dc2626)">—</div><div class="l">Atrasadas</div></div>
         </div>
 
@@ -248,8 +248,8 @@
         <div class="subtitle">Mesa coordinada por la Secretaría Técnica (GADPS) con 5 submesas temáticas.</div>
 
         <div class="stats">
-          <div class="stat"><div class="n sucumbios-n" id="suc-total">93</div><div class="l">Actividades</div></div>
-          <div class="stat"><div class="n sucumbios-n" id="suc-pct">—%</div><div class="l">Completadas</div></div>
+          <div class="stat"><div class="n sucumbios-n" id="suc-total">…</div><div class="l">Actividades</div></div>
+          <div class="stat"><div class="n sucumbios-n" id="suc-pct">—</div><div class="l">Completadas</div></div>
           <div class="stat"><div class="n sucumbios-n" id="suc-late" style="color:var(--red,#dc2626)">—</div><div class="l">Atrasadas</div></div>
         </div>
 
@@ -302,16 +302,26 @@
         upd.textContent = d ? 'Actualizado: ' + d : '';
       }
     }
-    try {
-      const [suc, orl] = await Promise.all([
-        fetch('sucumbios/data/actividades.json').then(r => r.json()),
-        fetch('orellana/data/actividades.json').then(r => r.json())
-      ]);
-      inject('suc', calcStats(suc));
-      inject('orl', calcStats(orl));
-    } catch (e) {
-      // Silently fall back to hardcoded values already in HTML
+    async function loadProvince(prefix, url) {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        inject(prefix, calcStats(await res.json()));
+      } catch (e) {
+        // One province failing must not poison the other. Show "—" for
+        // numeric stats and a soft "no se pudo cargar" footer.
+        const q = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+        q(prefix + '-total', '—');
+        q(prefix + '-pct',   '—');
+        q(prefix + '-late',  '—');
+        const upd = document.getElementById(prefix + '-updated');
+        if (upd) upd.textContent = 'No se pudieron cargar los datos en este momento.';
+      }
     }
+    await Promise.all([
+      loadProvince('suc', 'sucumbios/data/actividades.json'),
+      loadProvince('orl', 'orellana/data/actividades.json'),
+    ]);
   </script>
 
 </body>

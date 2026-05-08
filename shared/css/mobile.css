@@ -22,8 +22,19 @@
     grid-template-columns: 1fr !important;
     padding: 20px !important;
   }
-  /* MetaQ stats row */
-  #main-content > div[style*="grid-template-columns:repeat(4"] {
+  /* MetaQ stats row + Informe Resumen (nested under max-width wrapper) */
+  #main-content div[style*="grid-template-columns:repeat(4"] {
     grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* Informe hero (auto 1fr two-column with %% + pills) */
+  #main-content div[style*="grid-template-columns:auto 1fr"] {
+    grid-template-columns: 1fr !important;
+    text-align: center;
+    gap: 16px !important;
+    padding: 20px !important;
+  }
+  #main-content div[style*="grid-template-columns:auto 1fr"] > div:first-child > div:first-child {
+    font-size: 48px !important;
   }
 }

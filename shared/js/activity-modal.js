@@ -15,9 +15,6 @@ export function initActivityModal({ activities: acts, actor: a, logUrl: l, formU
 }
 
 async function open(id) {
-  const a = activities.find(x => x.id === id);
-  if (!a) return;
-
   let overlay = document.getElementById('activity-modal');
   if (!overlay) {
     overlay = document.createElement('div');
@@ -26,6 +23,29 @@ async function open(id) {
     document.body.appendChild(overlay);
   }
   overlay.className = 'modal-overlay open';
+
+  const a = activities.find(x => x.id === id);
+  if (!a) {
+    // Surface "not found" rather than silently noop'ing — happens when an
+    // email link points to an archived/renamed ID, or when the URL is mistyped.
+    overlay.innerHTML = `
+      <div class="modal">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:14px">
+          <div>
+            <div class="mono" style="font-size:10px;color:var(--muted)">${escapeHtml(id || '')}</div>
+            <h3 style="font-size:18px;margin-top:4px;color:var(--ink)">Actividad no encontrada</h3>
+          </div>
+          <button data-close style="background:none;border:0;font-size:24px;color:var(--muted);cursor:pointer">×</button>
+        </div>
+        <div style="font-size:13px;color:var(--ink-3);line-height:1.6">
+          No encontramos una actividad con este ID en el dataset actual. Es posible que haya sido renombrada o archivada.
+          Cierra este aviso y revisa la lista de actividades en el panel.
+        </div>
+      </div>`;
+    overlay.querySelector('[data-close]')?.addEventListener('click', close);
+    return;
+  }
+
   overlay.innerHTML = `<div class="modal"><div id="modal-body" style="font-size:14px;color:var(--ink-2)">Cargando…</div></div>`;
 
   const log = await loadLog(id);

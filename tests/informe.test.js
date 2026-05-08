@@ -45,6 +45,30 @@ export function test_riesgo_includes_atrasado_and_notas_bloqueador() {
   assert.ok(!riesgoIds.includes('ok'));
 }
 
+export function test_empty_activities_does_not_throw() {
+  // Defensive: if a province has no activities yet, the helper must not blow up.
+  const stats = computeInformeStats([]);
+  assert.equal(stats.total, 0);
+  assert.equal(stats.pct, 0);
+  assert.equal(stats.completadas.length, 0);
+  assert.equal(stats.atrasadas.length, 0);
+  assert.deepEqual(stats.completadasBySubmesa, {});
+  assert.deepEqual(stats.riesgo, []);
+}
+
+export function test_completadas_groups_mesa_bucket_separately() {
+  // Mesa-bucket (cross-cutting ST-led work) is the majority of activities
+  // in real data — must surface in completadasBySubmesa, not vanish.
+  const acts = [
+    act({ id: 'M1', estado: 'Completado', submesa: 'Mesa' }),
+    act({ id: 'M2', estado: 'Completado', submesa: 'Mesa' }),
+    act({ id: 'S1A', estado: 'Completado', submesa: 'S1' }),
+  ];
+  const stats = computeInformeStats(acts);
+  assert.equal(stats.completadasBySubmesa['Mesa'].length, 2);
+  assert.equal(stats.completadasBySubmesa['S1'].length, 1);
+}
+
 export function test_rechazado_counts_with_atrasadas_and_in_riesgo() {
   // Rechazado activities are returned by ST and need redo — bucket them
   // with atrasadas so the hero pills sum to total, and surface them in riesgo.
